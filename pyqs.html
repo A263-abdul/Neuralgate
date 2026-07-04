@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PYQ Bank — NeuralGATE</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .pyq-header { margin-bottom: 32px; }
+    .pyq-stats { display: flex; gap: 20px; flex-wrap: wrap; margin-top: 20px; }
+    .pyq-stat { background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 14px 22px; }
+    .pyq-stat-val { font-size: 22px; font-weight: 800; font-family: var(--font-head); }
+    .pyq-stat-label { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
+
+    .pyq-filters {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 28px;
+      padding: 20px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      align-items: center;
+    }
+
+    .filter-select {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 9px 14px;
+      font-size: 13px;
+      color: var(--text-primary);
+      cursor: pointer;
+      font-family: var(--font-body);
+    }
+
+    /* PYQ question card */
+    .pyq-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      margin-bottom: 20px;
+      transition: var(--transition);
+    }
+
+    .pyq-card:hover { border-color: var(--border); }
+    .pyq-card.attempted { border-left: 3px solid var(--green); }
+    .pyq-card.bookmarked { border-left: 3px solid var(--amber); }
+
+    .pyq-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border-subtle);
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .pyq-meta-tags { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+
+    .pyq-year-badge {
+      font-size: 12px;
+      font-weight: 700;
+      padding: 3px 10px;
+      border-radius: 100px;
+      background: var(--violet);
+      color: #fff;
+    }
+
+    .pyq-card-body { padding: 20px; }
+
+    .pyq-question {
+      font-size: 15px;
+      font-weight: 500;
+      line-height: 1.7;
+      margin-bottom: 20px;
+      color: var(--text-primary);
+    }
+
+    .pyq-options { display: flex; flex-direction: column; gap: 10px; margin-bottom: 18px; }
+
+    .pyq-option {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 12px 16px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      transition: var(--transition);
+      text-align: left;
+      width: 100%;
+      font-family: var(--font-body);
+      font-size: 14px;
+      color: var(--text-secondary);
+    }
+
+    .pyq-option:hover { background: rgba(99,102,241,0.06); border-color: var(--violet); color: var(--text-primary); }
+
+    .pyq-option.selected { background: rgba(99,102,241,0.1); border-color: var(--violet); color: var(--text-primary); }
+    .pyq-option.correct { background: rgba(16,185,129,0.1); border-color: var(--green); color: var(--green); }
+    .pyq-option.incorrect { background: rgba(244,63,94,0.08); border-color: var(--rose); color: var(--rose); }
+    .pyq-option.reveal-correct { background: rgba(16,185,129,0.06); border-color: rgba(16,185,129,0.4); color: var(--green); }
+
+    .option-letter {
+      width: 22px; height: 22px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.06);
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700;
+      font-size: 11px;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+
+    .pyq-explanation {
+      display: none;
+      background: rgba(16,185,129,0.06);
+      border: 1px solid rgba(16,185,129,0.2);
+      border-radius: var(--radius-md);
+      padding: 14px 16px;
+      font-size: 13px;
+      line-height: 1.7;
+      color: var(--text-secondary);
+      margin-top: 14px;
+    }
+
+    .pyq-explanation.show { display: block; }
+
+    .pyq-card-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 14px 20px;
+      border-top: 1px solid var(--border-subtle);
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    /* Progress sidebar */
+    .pyq-progress-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: 22px;
+      margin-bottom: 20px;
+    }
+
+    .pyq-layout { display: grid; grid-template-columns: 1fr 280px; gap: 28px; align-items: start; }
+
+    @media (max-width: 900px) { .pyq-layout { grid-template-columns: 1fr; } .pyq-sidebar { display: none; } }
+  </style>
+</head>
+<body>
+  <div id="nav-shell"></div>
+
+  <main class="page-content">
+    <div class="container">
+      <div class="pyq-header">
+        <p class="section-eyebrow">Previous Year Questions</p>
+        <h1 class="section-title" style="font-size:32px;">GATE CSE <span class="gradient">PYQ Bank</span></h1>
+        <p class="text-secondary">18 curated questions from GATE 2018–2024 with detailed solutions.</p>
+        <div class="pyq-stats">
+          <div class="pyq-stat"><div class="pyq-stat-val" id="stat-total">18</div><div class="pyq-stat-label">Total Questions</div></div>
+          <div class="pyq-stat"><div class="pyq-stat-val" style="color:var(--green);" id="stat-attempted">0</div><div class="pyq-stat-label">Attempted</div></div>
+          <div class="pyq-stat"><div class="pyq-stat-val" style="color:var(--violet-light);" id="stat-correct">0</div><div class="pyq-stat-label">Correct</div></div>
+          <div class="pyq-stat"><div class="pyq-stat-val" style="color:var(--amber);" id="stat-bookmarked">0</div><div class="pyq-stat-label">Bookmarked</div></div>
+          <div class="pyq-stat"><div class="pyq-stat-val" id="stat-accuracy">--%</div><div class="pyq-stat-label">Accuracy</div></div>
+        </div>
+      </div>
+
+      <!-- Filters -->
+      <div class="pyq-filters">
+        <select class="filter-select" id="filter-year">
+          <option value="">All Years</option>
+          <option>2024</option><option>2023</option><option>2022</option>
+          <option>2021</option><option>2020</option><option>2019</option><option>2018</option>
+        </select>
+        <select class="filter-select" id="filter-subject">
+          <option value="">All Subjects</option>
+          <option>Algorithms</option><option>Data Structures</option>
+          <option>Operating Systems</option><option>DBMS</option>
+          <option>Computer Networks</option><option>Theory of Computation</option>
+          <option>Digital Logic</option>
+        </select>
+        <select class="filter-select" id="filter-difficulty">
+          <option value="">All Difficulty</option>
+          <option>Easy</option><option>Medium</option><option>Hard</option>
+        </select>
+        <select class="filter-select" id="filter-marks">
+          <option value="">All Marks</option>
+          <option>1</option><option>2</option>
+        </select>
+        <label style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--text-secondary);cursor:pointer;">
+          <input type="checkbox" id="filter-bookmarked" style="accent-color:var(--violet);">
+          Bookmarked only
+        </label>
+        <label style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--text-secondary);cursor:pointer;">
+          <input type="checkbox" id="filter-unattempted" style="accent-color:var(--violet);">
+          Unattempted only
+        </label>
+        <button class="btn btn-ghost btn-sm" id="reset-filters">Reset</button>
+      </div>
+
+      <div class="pyq-layout">
+        <!-- Questions list -->
+        <div>
+          <div id="pyq-count-line" style="font-size:13px; color:var(--text-secondary); margin-bottom:18px;"></div>
+          <div id="pyq-list"><!-- filled by JS --></div>
+          <div id="pyq-no-results" style="display:none; text-align:center; padding:60px 0; color:var(--text-secondary);">
+            <div style="font-size:40px; margin-bottom:12px;">📋</div>
+            <p>No questions match your filters.</p>
+          </div>
+        </div>
+
+        <!-- Progress sidebar -->
+        <div class="pyq-sidebar" id="pyq-sidebar">
+          <div class="pyq-progress-card">
+            <div style="font-size:14px; font-weight:700; margin-bottom:16px;">📊 Subject Breakdown</div>
+            <div id="subject-breakdown-list"></div>
+          </div>
+          <div class="pyq-progress-card">
+            <div style="font-size:14px; font-weight:700; margin-bottom:16px;">🎯 Year Coverage</div>
+            <div id="year-coverage-list" style="display:flex; flex-direction:column; gap:6px;"></div>
+          </div>
+          <div class="pyq-progress-card" style="text-align:center;">
+            <div style="font-size:24px; margin-bottom:8px;">💡</div>
+            <div style="font-size:14px; font-weight:700; margin-bottom:6px;">Study Tip</div>
+            <div style="font-size:13px; color:var(--text-secondary); line-height:1.6;" id="study-tip"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <div id="footer-shell"></div>
+
+  <script src="data.js"></script>
+  <script>
+    document.getElementById('nav-shell').innerHTML = GV.renderNavbar('pyqs');
+    document.getElementById('footer-shell').innerHTML = GV.renderFooter();
+
+    const tips = [
+      "Solve 5 PYQs daily — focus on understanding the concept, not just memorizing the answer.",
+      "For 2-mark questions, first eliminate obviously wrong options to improve speed.",
+      "After each wrong answer, revisit the topic before moving on.",
+      "GATE puts heavy weight on Operating Systems and Algorithms — prioritize these.",
+      "Time yourself: GATE allows ~3 min per question average. Practice under pressure.",
+      "Negative marking applies only to MCQs, not MSQs. Be careful with 2-mark questions."
+    ];
+    document.getElementById('study-tip').textContent = tips[Math.floor(Math.random() * tips.length)];
+
+    const difficultyColors = { Easy: 'badge-emerald', Medium: 'badge-amber', Hard: 'badge-rose' };
+    const subjectColors = {
+      'Algorithms': '#6366f1', 'Data Structures': '#10b981', 'Operating Systems': '#f59e0b',
+      'DBMS': '#f43f5e', 'Computer Networks': '#a78bfa', 'Theory of Computation': '#38bdf8', 'Digital Logic': '#fb923c'
+    };
+
+    function getAttemptData() {
+      const user = GV.getUser();
+      if (user) return GV.getUserData('pyqAttempts', {});
+      return JSON.parse(localStorage.getItem('gv_pyq_attempts_guest') || '{}');
+    }
+
+    function saveAttemptData(data) {
+      const user = GV.getUser();
+      if (user) { GV.setUserData('pyqAttempts', data); return; }
+      localStorage.setItem('gv_pyq_attempts_guest', JSON.stringify(data));
+    }
+
+    function getBookmarks() {
+      const user = GV.getUser();
+      if (user) return GV.getUserData('pyqBookmarks', []);
+      return JSON.parse(localStorage.getItem('gv_pyq_bookmarks_guest') || '[]');
+    }
+
+    function saveBookmarks(bm) {
+      const user = GV.getUser();
+      if (user) { GV.setUserData('pyqBookmarks', bm); return; }
+      localStorage.setItem('gv_pyq_bookmarks_guest', JSON.stringify(bm));
+    }
+
+    function updateStats() {
+      const attempts = getAttemptData();
+      const bookmarks = getBookmarks();
+      const totalAttempted = Object.keys(attempts).length;
+      const totalCorrect = Object.values(attempts).filter(a => a.correct).length;
+      const accuracy = totalAttempted > 0 ? Math.round((totalCorrect / totalAttempted) * 100) : null;
+
+      document.getElementById('stat-attempted').textContent = totalAttempted;
+      document.getElementById('stat-correct').textContent = totalCorrect;
+      document.getElementById('stat-bookmarked').textContent = bookmarks.length;
+      document.getElementById('stat-accuracy').textContent = accuracy !== null ? accuracy + '%' : '--%';
+    }
+
+    function renderSidebar() {
+      const attempts = getAttemptData();
+      const subjects = [...new Set(GV.pyqs.map(q => q.subject))];
+
+      let subjectHTML = '';
+      subjects.forEach(s => {
+        const subjectQs = GV.pyqs.filter(q => q.subject === s);
+        const attempted = subjectQs.filter(q => attempts[q.id]).length;
+        const pct = Math.round((attempted / subjectQs.length) * 100);
+        const color = subjectColors[s] || '#6366f1';
+        subjectHTML += `
+          <div style="margin-bottom:14px;">
+            <div style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:5px;">
+              <span style="font-weight:500; color:var(--text-secondary);">${s}</span>
+              <span style="font-weight:700; color:${color};">${attempted}/${subjectQs.length}</span>
+            </div>
+            <div class="progress-bar-wrap" style="height:4px;">
+              <div class="progress-bar-fill" style="width:${pct}%; background:${color};"></div>
+            </div>
+          </div>`;
+      });
+      document.getElementById('subject-breakdown-list').innerHTML = subjectHTML;
+
+      // Year coverage
+      const years = [2024, 2023, 2022, 2021, 2020, 2019, 2018];
+      let yearHTML = '';
+      years.forEach(y => {
+        const yearQs = GV.pyqs.filter(q => q.year === y);
+        const attempted = yearQs.filter(q => attempts[q.id]).length;
+        yearHTML += `
+          <div style="display:flex; justify-content:space-between; font-size:12px; align-items:center;">
+            <span style="font-weight:600;">${y}</span>
+            <span style="color:var(--text-secondary);">${attempted}/${yearQs.length} done</span>
+          </div>`;
+      });
+      document.getElementById('year-coverage-list').innerHTML = yearHTML;
+    }
+
+    function renderPYQs() {
+      const yearFilter = document.getElementById('filter-year').value;
+      const subjectFilter = document.getElementById('filter-subject').value;
+      const diffFilter = document.getElementById('filter-difficulty').value;
+      const marksFilter = document.getElementById('filter-marks').value;
+      const bookmarkFilter = document.getElementById('filter-bookmarked').checked;
+      const unattemptedFilter = document.getElementById('filter-unattempted').checked;
+
+      const attempts = getAttemptData();
+      const bookmarks = getBookmarks();
+
+      let filtered = GV.pyqs.filter(q => {
+        if (yearFilter && q.year !== parseInt(yearFilter)) return false;
+        if (subjectFilter && q.subject !== subjectFilter) return false;
+        if (diffFilter && q.difficulty !== diffFilter) return false;
+        if (marksFilter && q.marks !== parseInt(marksFilter)) return false;
+        if (bookmarkFilter && !bookmarks.includes(q.id)) return false;
+        if (unattemptedFilter && attempts[q.id]) return false;
+        return true;
+      });
+
+      document.getElementById('pyq-count-line').textContent = `Showing ${filtered.length} of ${GV.pyqs.length} questions`;
+
+      const listEl = document.getElementById('pyq-list');
+      const noResults = document.getElementById('pyq-no-results');
+
+      if (filtered.length === 0) {
+        listEl.innerHTML = '';
+        noResults.style.display = 'block';
+        return;
+      }
+
+      noResults.style.display = 'none';
+      const optionLetters = ['A', 'B', 'C', 'D'];
+
+      listEl.innerHTML = filtered.map(q => {
+        const attempt = attempts[q.id];
+        const isBookmarked = bookmarks.includes(q.id);
+        const color = subjectColors[q.subject] || '#6366f1';
+
+        const optionsHTML = q.options.map((opt, i) => {
+          let cls = '';
+          if (attempt) {
+            if (i === q.answer) cls = 'correct';
+            else if (i === attempt.selectedIdx && !attempt.correct) cls = 'incorrect';
+          }
+          return `<button class="pyq-option ${cls}" data-qid="${q.id}" data-idx="${i}" ${attempt ? 'disabled style="cursor:default"' : ''}>
+            <span class="option-letter">${optionLetters[i]}</span>
+            <span>${opt}</span>
+          </button>`;
+        }).join('');
+
+        return `
+          <div class="pyq-card ${attempt ? 'attempted' : ''} ${isBookmarked ? 'bookmarked' : ''}" id="pyq-card-${q.id}">
+            <div class="pyq-card-header">
+              <div class="pyq-meta-tags">
+                <span class="pyq-year-badge">${q.year}</span>
+                <span class="tag" style="background:${color}18; color:${color}; border:1px solid ${color}30;">${q.subject}</span>
+                <span class="badge ${difficultyColors[q.difficulty]}">${q.difficulty}</span>
+                <span class="tag">${q.marks} mark${q.marks > 1 ? 's' : ''}</span>
+                <span class="tag">${q.topic}</span>
+              </div>
+              <div style="display:flex; gap:8px; align-items:center;">
+                ${attempt ? `<span style="font-size:20px;">${attempt.correct ? '✅' : '❌'}</span>` : ''}
+                <button class="btn btn-ghost btn-sm bookmark-btn" data-qid="${q.id}" title="Bookmark" style="${isBookmarked ? 'color:var(--amber);' : ''}">
+                  ${isBookmarked ? '⭐' : '☆'}
+                </button>
+              </div>
+            </div>
+            <div class="pyq-card-body">
+              <div class="pyq-question">Q${q.id}. ${q.question}</div>
+              <div class="pyq-options" id="options-${q.id}">${optionsHTML}</div>
+              <div class="pyq-explanation ${attempt ? 'show' : ''}" id="exp-${q.id}">
+                <strong style="color:var(--green);">✓ Correct Answer: ${optionLetters[q.answer]}) ${q.options[q.answer]}</strong><br><br>
+                <strong>Explanation:</strong> ${q.explanation}
+              </div>
+            </div>
+            <div class="pyq-card-footer">
+              <div style="font-size:13px; color:var(--text-muted);">
+                ${attempt ? `Answered · ${attempt.correct ? '<span style="color:var(--green)">Correct</span>' : '<span style="color:var(--rose)">Incorrect</span>'}` : 'Not attempted'}
+              </div>
+              ${!attempt ? `<button class="btn btn-ghost btn-sm reveal-btn" data-qid="${q.id}">Show Answer</button>` : ''}
+            </div>
+          </div>`;
+      }).join('');
+
+      // Bind option buttons
+      document.querySelectorAll('.pyq-option:not([disabled])').forEach(btn => {
+        btn.addEventListener('click', function() {
+          const qid = parseInt(this.getAttribute('data-qid'));
+          const idx = parseInt(this.getAttribute('data-idx'));
+          const q = GV.pyqs.find(q => q.id === qid);
+          const correct = idx === q.answer;
+
+          const attempts = getAttemptData();
+          attempts[qid] = { selectedIdx: idx, correct };
+          saveAttemptData(attempts);
+
+          // Update UI
+          const optContainer = document.getElementById(`options-${qid}`);
+          optContainer.querySelectorAll('.pyq-option').forEach((ob, i) => {
+            ob.disabled = true;
+            ob.style.cursor = 'default';
+            if (i === q.answer) ob.classList.add('correct');
+            else if (i === idx && !correct) ob.classList.add('incorrect');
+          });
+
+          document.getElementById(`exp-${qid}`).classList.add('show');
+
+          const card = document.getElementById(`pyq-card-${qid}`);
+          card.classList.add('attempted');
+
+          // Add result icon
+          const headerActions = card.querySelector('.pyq-card-header > div:last-child');
+          headerActions.insertAdjacentHTML('afterbegin', `<span style="font-size:20px;">${correct ? '✅' : '❌'}</span>`);
+
+          updateStats();
+          renderSidebar();
+        });
+      });
+
+      // Bookmark buttons
+      document.querySelectorAll('.bookmark-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+          const qid = parseInt(this.getAttribute('data-qid'));
+          let bm = getBookmarks();
+          if (bm.includes(qid)) {
+            bm = bm.filter(b => b !== qid);
+            this.textContent = '☆';
+            this.style.color = '';
+          } else {
+            bm.push(qid);
+            this.textContent = '⭐';
+            this.style.color = 'var(--amber)';
+          }
+          saveBookmarks(bm);
+          updateStats();
+          renderSidebar();
+        });
+      });
+
+      // Reveal buttons
+      document.querySelectorAll('.reveal-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+          const qid = parseInt(this.getAttribute('data-qid'));
+          document.getElementById(`exp-${qid}`).classList.add('show');
+          this.style.display = 'none';
+        });
+      });
+    }
+
+    document.getElementById('filter-year').addEventListener('change', renderPYQs);
+    document.getElementById('filter-subject').addEventListener('change', renderPYQs);
+    document.getElementById('filter-difficulty').addEventListener('change', renderPYQs);
+    document.getElementById('filter-marks').addEventListener('change', renderPYQs);
+    document.getElementById('filter-bookmarked').addEventListener('change', renderPYQs);
+    document.getElementById('filter-unattempted').addEventListener('change', renderPYQs);
+    document.getElementById('reset-filters').addEventListener('click', function() {
+      document.getElementById('filter-year').value = '';
+      document.getElementById('filter-subject').value = '';
+      document.getElementById('filter-difficulty').value = '';
+      document.getElementById('filter-marks').value = '';
+      document.getElementById('filter-bookmarked').checked = false;
+      document.getElementById('filter-unattempted').checked = false;
+      renderPYQs();
+    });
+
+    updateStats();
+    renderSidebar();
+    renderPYQs();
+  </script>
+</body>
+</html>

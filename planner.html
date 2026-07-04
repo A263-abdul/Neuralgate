@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Study Planner — NeuralGATE</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .planner-header-row { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 28px; flex-wrap: wrap; gap: 16px; }
+    .progress-overview { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 32px; }
+    .progress-stat { background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: var(--radius-lg); padding: 20px; text-align: center; }
+    .progress-stat-val { font-size: 28px; font-weight: 800; font-family: var(--font-head); }
+    .progress-stat-label { font-size: 12px; color: var(--text-secondary); margin-top: 4px; }
+    .week-card { background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: var(--radius-lg); margin-bottom: 16px; overflow: hidden; transition: var(--transition); }
+    .week-card.completed { border-left: 3px solid var(--green); }
+    .week-card.current { border-left: 3px solid var(--violet); box-shadow: 0 0 20px rgba(99,102,241,0.1); }
+    .week-header { padding: 18px 22px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; gap: 12px; }
+    .week-header:hover { background: rgba(255,255,255,0.02); }
+    .week-num { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); margin-bottom: 2px; }
+    .week-title { font-size: 16px; font-weight: 700; }
+    .week-progress-text { font-size: 13px; font-weight: 600; }
+    .week-body { padding: 0 22px 20px; display: none; }
+    .week-body.open { display: block; }
+    .topic-row { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--border-subtle); }
+    .topic-row:last-child { border-bottom: none; }
+    .topic-check { width: 20px; height: 20px; border-radius: 5px; border: 2px solid var(--border); cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: var(--transition); }
+    .topic-check.checked { background: var(--green); border-color: var(--green); }
+    .topic-text { font-size: 14px; font-weight: 500; flex: 1; }
+    .topic-text.done { text-decoration: line-through; color: var(--text-muted); }
+    .ring-small { position: relative; width: 56px; height: 56px; flex-shrink: 0; }
+    .ring-small svg { transform: rotate(-90deg); }
+  </style>
+</head>
+<body>
+  <div id="nav-shell"></div>
+  <main class="page-content">
+    <div class="container">
+      <div class="planner-header-row">
+        <div>
+          <p class="section-eyebrow">Structured Preparation</p>
+          <h1 class="section-title" style="font-size:32px;">12-Week <span class="gradient">GATE Study Planner</span></h1>
+          <p class="text-secondary">A proven week-by-week roadmap to cover the entire GATE CSE syllabus.</p>
+        </div>
+        <div style="display:flex; gap:10px;">
+          <button class="btn btn-outline btn-sm" id="reset-plan">Reset Plan</button>
+          <button class="btn btn-emerald btn-sm" id="mark-all-week">Complete Current Week</button>
+        </div>
+      </div>
+
+      <!-- Progress overview -->
+      <div class="progress-overview">
+        <div class="progress-stat">
+          <div class="progress-stat-val" style="color:var(--violet-light);" id="pl-total">0</div>
+          <div class="progress-stat-label">Topics Completed</div>
+        </div>
+        <div class="progress-stat">
+          <div class="progress-stat-val" style="color:var(--green);" id="pl-weeks">0</div>
+          <div class="progress-stat-label">Weeks Done</div>
+        </div>
+        <div class="progress-stat">
+          <div class="progress-stat-val" style="color:var(--amber);" id="pl-pct">0%</div>
+          <div class="progress-stat-label">Overall Progress</div>
+        </div>
+        <div class="progress-stat">
+          <div class="progress-stat-val" style="color:var(--rose);" id="pl-days">--</div>
+          <div class="progress-stat-label">Days Remaining</div>
+        </div>
+      </div>
+
+      <!-- Overall progress bar -->
+      <div style="background:var(--bg-card);border:1px solid var(--border-subtle);border-radius:var(--radius-lg);padding:22px;margin-bottom:28px;">
+        <div style="display:flex;justify-content:space-between;margin-bottom:10px;font-size:14px;font-weight:600;">
+          <span>Syllabus Completion</span>
+          <span id="overall-progress-lbl" style="color:var(--violet-light);">0 / 36 topics</span>
+        </div>
+        <div class="progress-bar-wrap" style="height:10px; border-radius:10px;">
+          <div class="progress-bar-fill" id="overall-progress-bar" style="width:0%; border-radius:10px;"></div>
+        </div>
+      </div>
+
+      <!-- Week cards -->
+      <div id="planner-weeks"></div>
+    </div>
+  </main>
+  <div id="footer-shell"></div>
+
+  <script src="data.js"></script>
+  <script>
+    document.getElementById('nav-shell').innerHTML = GV.renderNavbar('planner');
+    document.getElementById('footer-shell').innerHTML = GV.renderFooter();
+
+    function getCompleted() {
+      const user = GV.getUser();
+      if (user) return GV.getUserData('completedTopics', []);
+      return JSON.parse(localStorage.getItem('gv_completed_guest') || '[]');
+    }
+
+    function saveCompleted(arr) {
+      const user = GV.getUser();
+      if (user) { GV.setUserData('completedTopics', arr); return; }
+      localStorage.setItem('gv_completed_guest', JSON.stringify(arr));
+    }
+
+    function topicKey(weekIdx, topicIdx) { return `${weekIdx}-${topicIdx}`; }
+
+    const totalTopics = GV.studyPlan.reduce((acc, w) => acc + w.topics.length, 0);
+
+    function updateStats() {
+      const completed = getCompleted();
+      const cnt = completed.length;
+      const weeks = GV.studyPlan.filter((w, wi) => w.topics.every((_, ti) => completed.includes(topicKey(wi, ti)))).length;
+      const pct = Math.round((cnt / totalTopics) * 100);
+
+      document.getElementById('pl-total').textContent = cnt;
+      document.getElementById('pl-weeks').textContent = weeks;
+      document.getElementById('pl-pct').textContent = pct + '%';
+      document.getElementById('pl-days').textContent = GV.getDaysLeft();
+      document.getElementById('overall-progress-lbl').textContent = `${cnt} / ${totalTopics} topics`;
+      document.getElementById('overall-progress-bar').style.width = pct + '%';
+    }
+
+    function renderPlan() {
+      const completed = getCompleted();
+      const planEl = document.getElementById('planner-weeks');
+
+      // Determine current week = first week not fully completed
+      let currentWeekIdx = GV.studyPlan.length - 1;
+      for (let wi = 0; wi < GV.studyPlan.length; wi++) {
+        const allDone = GV.studyPlan[wi].topics.every((_, ti) => completed.includes(topicKey(wi, ti)));
+        if (!allDone) { currentWeekIdx = wi; break; }
+      }
+
+      planEl.innerHTML = GV.studyPlan.map((week, wi) => {
+        const weekCompleted = week.topics.every((_, ti) => completed.includes(topicKey(wi, ti)));
+        const doneCount = week.topics.filter((_, ti) => completed.includes(topicKey(wi, ti))).length;
+        const pct = Math.round((doneCount / week.topics.length) * 100);
+        const isCurrent = wi === currentWeekIdx;
+        const circumference = 100.5;
+        const offset = circumference - (pct / 100) * circumference;
+
+        const topicsHTML = week.topics.map((topic, ti) => {
+          const key = topicKey(wi, ti);
+          const isDone = completed.includes(key);
+          return `
+            <div class="topic-row">
+              <div class="topic-check ${isDone ? 'checked' : ''}" onclick="toggleTopic('${key}')" data-key="${key}">
+                ${isDone ? '<span style="color:#fff;font-size:12px;font-weight:700;">✓</span>' : ''}
+              </div>
+              <span class="topic-text ${isDone ? 'done' : ''}" id="topic-text-${key}">${topic}</span>
+              <span class="badge ${isDone ? 'badge-emerald' : 'badge-accent'}" style="font-size:10px;">${isDone ? 'Done' : 'Pending'}</span>
+            </div>`;
+        }).join('');
+
+        return `
+          <div class="week-card ${weekCompleted ? 'completed' : ''} ${isCurrent ? 'current' : ''}" id="week-card-${wi}">
+            <div class="week-header" onclick="toggleWeek(${wi})">
+              <div style="flex:1;">
+                <div class="week-num">Week ${week.week} ${isCurrent ? '· <span style="color:var(--violet)">Currently Active</span>' : ''}</div>
+                <div class="week-title">${week.title}</div>
+                <div style="margin-top:8px; display:flex; gap:8px; align-items:center;">
+                  <div class="progress-bar-wrap" style="width:160px; height:4px;"><div class="progress-bar-fill" style="width:${pct}%;"></div></div>
+                  <span style="font-size:12px; color:var(--text-muted);">${doneCount}/${week.topics.length} topics</span>
+                </div>
+              </div>
+              <div style="display:flex; align-items:center; gap:14px;">
+                <div class="ring-small">
+                  <svg width="56" height="56" viewBox="0 0 56 56">
+                    <circle cx="28" cy="28" r="22" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="5"/>
+                    <circle cx="28" cy="28" r="22" fill="none"
+                      stroke="${weekCompleted ? 'var(--green)' : 'var(--violet)'}"
+                      stroke-width="5" stroke-linecap="round"
+                      stroke-dasharray="${circumference}"
+                      stroke-dashoffset="${offset}"
+                      transform="rotate(-90 28 28)"/>
+                  </svg>
+                  <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;">${pct}%</div>
+                </div>
+                <span style="font-size:20px; color:var(--text-muted);" id="week-chevron-${wi}">▸</span>
+              </div>
+            </div>
+            <div class="week-body ${isCurrent ? 'open' : ''}" id="week-body-${wi}">
+              ${topicsHTML}
+              <div style="margin-top:14px; display:flex; gap:10px;">
+                <button class="btn btn-ghost btn-sm" onclick="completeWeek(${wi})">✓ Complete All Topics</button>
+                ${weekCompleted ? '<span class="badge badge-emerald">✓ Week Complete!</span>' : ''}
+              </div>
+            </div>
+          </div>`;
+      }).join('');
+
+      updateStats();
+    }
+
+    window.toggleWeek = (wi) => {
+      const body = document.getElementById(`week-body-${wi}`);
+      const chevron = document.getElementById(`week-chevron-${wi}`);
+      body.classList.toggle('open');
+      chevron.textContent = body.classList.contains('open') ? '▾' : '▸';
+    };
+
+    window.toggleTopic = (key) => {
+      let completed = getCompleted();
+      if (completed.includes(key)) {
+        completed = completed.filter(k => k !== key);
+      } else {
+        completed.push(key);
+      }
+      saveCompleted(completed);
+      renderPlan();
+    };
+
+    window.completeWeek = (wi) => {
+      let completed = getCompleted();
+      GV.studyPlan[wi].topics.forEach((_, ti) => {
+        const key = topicKey(wi, ti);
+        if (!completed.includes(key)) completed.push(key);
+      });
+      saveCompleted(completed);
+      renderPlan();
+    };
+
+    document.getElementById('reset-plan').addEventListener('click', () => {
+      if (confirm('Reset all planner progress? This cannot be undone.')) {
+        saveCompleted([]);
+        renderPlan();
+      }
+    });
+
+    document.getElementById('mark-all-week').addEventListener('click', () => {
+      const completed = getCompleted();
+      let currentWeekIdx = GV.studyPlan.length - 1;
+      for (let wi = 0; wi < GV.studyPlan.length; wi++) {
+        if (!GV.studyPlan[wi].topics.every((_, ti) => completed.includes(topicKey(wi, ti)))) {
+          currentWeekIdx = wi; break;
+        }
+      }
+      completeWeek(currentWeekIdx);
+    });
+
+    renderPlan();
+  </script>
+</body>
+</html>

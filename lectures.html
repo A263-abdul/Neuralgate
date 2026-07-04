@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Video Lectures — NeuralGATE</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .lec-hero {
+      background: linear-gradient(135deg, rgba(168,85,247,0.1), rgba(34,211,238,0.06));
+      border: 1px solid rgba(168,85,247,0.2);
+      border-radius: var(--radius-xl);
+      padding: 36px 40px;
+      margin-bottom: 32px;
+      display: flex; justify-content: space-between; align-items: center;
+      flex-wrap: wrap; gap: 24px;
+      position: relative; overflow: hidden;
+    }
+    .lec-hero::before {
+      content: ''; position: absolute; top: -40px; right: -40px;
+      width: 200px; height: 200px;
+      background: radial-gradient(circle, rgba(168,85,247,0.2), transparent 70%);
+    }
+    .lec-hero > * { position: relative; z-index: 1; }
+
+    .channel-strip {
+      display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 28px;
+    }
+    .channel-filter-btn {
+      display: flex; align-items: center; gap: 7px;
+      padding: 8px 16px; border-radius: var(--radius-xl);
+      font-size: 13px; font-weight: 700;
+      border: none; cursor: pointer; transition: var(--transition);
+      background: rgba(255,255,255,0.05);
+      color: var(--text-secondary);
+      border: 1px solid var(--border-subtle);
+    }
+    .channel-filter-btn:hover { background: rgba(255,255,255,0.09); color: var(--text-primary); }
+    .channel-filter-btn.active { color: var(--text-primary); }
+
+    .channel-filter-btn[data-ch="all"].active    { background: rgba(168,85,247,0.15); border-color: rgba(168,85,247,0.4); color: var(--violet-light); }
+    .channel-filter-btn[data-ch="PW"].active     { background: rgba(255,108,0,0.15);  border-color: rgba(255,108,0,0.4);  color: #ff6c00; }
+    .channel-filter-btn[data-ch="NPTEL"].active  { background: rgba(34,211,238,0.12); border-color: rgba(34,211,238,0.35); color: var(--cyan); }
+    .channel-filter-btn[data-ch="GFG"].active    { background: rgba(74,222,128,0.12); border-color: rgba(74,222,128,0.35); color: var(--green); }
+    .channel-filter-btn[data-ch="Abdul Bari"].active { background: rgba(168,85,247,0.15); border-color: rgba(168,85,247,0.4); color: var(--violet-light); }
+    .channel-filter-btn[data-ch="Neso"].active   { background: rgba(251,191,36,0.12); border-color: rgba(251,191,36,0.35); color: var(--amber); }
+    .channel-filter-btn[data-ch="GS"].active     { background: rgba(244,114,182,0.12); border-color: rgba(244,114,182,0.35); color: var(--pink); }
+
+    .lectures-filters {
+      display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 24px;
+      padding: 16px 20px; background: var(--bg-card);
+      border: 1px solid var(--border-subtle); border-radius: var(--radius-lg);
+    }
+    .search-input-wrap { position: relative; flex: 1; min-width: 200px; max-width: 300px; }
+    .search-input-wrap input {
+      width: 100%; background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.1); border-radius: var(--radius-md);
+      padding: 9px 14px 9px 36px; font-size: 13px;
+      color: var(--text-primary); font-family: var(--font-body);
+    }
+    .search-input-wrap input:focus { outline: none; border-color: var(--violet); box-shadow: 0 0 0 3px rgba(168,85,247,0.15); }
+    .search-icon { position: absolute; left: 11px; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 13px; }
+
+    /* Lecture card */
+    .lecture-card {
+      background: var(--bg-card); border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg); overflow: hidden;
+      transition: var(--transition); display: flex; flex-direction: column;
+    }
+    .lecture-card:hover { border-color: rgba(168,85,247,0.3); transform: translateY(-5px); box-shadow: 0 12px 40px rgba(0,0,0,0.5), 0 0 20px var(--violet-glow); }
+    .lecture-card.watched { border-color: rgba(74,222,128,0.3); }
+
+    .lecture-thumb {
+      width: 100%; height: 155px;
+      background: linear-gradient(135deg, rgba(168,85,247,0.3), rgba(34,211,238,0.2));
+      position: relative; overflow: hidden;
+    }
+    .thumb-img { width: 100%; height: 100%; object-fit: cover; position: absolute; inset: 0; transition: transform 0.4s ease; }
+    .lecture-card:hover .thumb-img { transform: scale(1.05); }
+
+    .play-overlay {
+      position: absolute; inset: 0;
+      background: linear-gradient(to top, rgba(7,0,15,0.8) 0%, rgba(0,0,0,0.3) 100%);
+      display: flex; align-items: center; justify-content: center;
+      opacity: 0; transition: opacity 0.25s;
+    }
+    .lecture-card:hover .play-overlay { opacity: 1; }
+
+    .play-btn {
+      width: 54px; height: 54px;
+      background: linear-gradient(135deg, var(--violet), #7e22ce);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 20px; transition: transform 0.2s;
+      box-shadow: 0 0 24px var(--violet-glow);
+    }
+    .play-btn:hover { transform: scale(1.12); }
+
+    .watched-badge {
+      position: absolute; top: 10px; right: 10px;
+      background: var(--green); color: #000;
+      font-size: 11px; font-weight: 800; padding: 3px 10px;
+      border-radius: 100px;
+    }
+
+    .duration-badge {
+      position: absolute; bottom: 10px; right: 10px;
+      background: rgba(0,0,0,0.75); backdrop-filter: blur(6px);
+      color: #fff; font-size: 11px; font-weight: 600;
+      padding: 3px 8px; border-radius: var(--radius-sm);
+    }
+
+    .lecture-body { padding: 16px 18px; flex: 1; }
+    .lecture-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; margin-bottom: 10px; }
+    .lecture-title { font-size: 14px; font-weight: 700; line-height: 1.45; flex: 1; }
+    .lecture-instructor { font-size: 12px; color: var(--text-muted); margin-top: 4px; margin-bottom: 8px; }
+
+    .lecture-footer {
+      padding: 12px 18px; border-top: 1px solid var(--border-subtle);
+      display: flex; gap: 8px; align-items: center;
+    }
+
+    /* Modal */
+    .video-modal-backdrop {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,0.9); z-index: 1000;
+      align-items: center; justify-content: center;
+      backdrop-filter: blur(8px);
+    }
+    .video-modal-backdrop.open { display: flex; }
+    .video-modal {
+      width: 90%; max-width: 900px;
+      background: #0c0018;
+      border: 1px solid rgba(168,85,247,0.3);
+      border-radius: var(--radius-xl); overflow: hidden;
+      box-shadow: 0 0 60px var(--violet-glow), 0 40px 80px rgba(0,0,0,0.6);
+    }
+    .video-modal-header {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 16px 22px; border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+    .video-embed { width: 100%; aspect-ratio: 16 / 9; border: none; }
+    .video-modal-footer {
+      padding: 14px 22px; display: flex;
+      justify-content: space-between; align-items: center; gap: 12px;
+    }
+
+    /* Channel colors for subject tags */
+    .subject-tag { padding: 3px 10px; border-radius: 100px; font-size: 11px; font-weight: 700; }
+    .subj-algo { background: rgba(168,85,247,0.15); color: var(--violet-light); }
+    .subj-ds   { background: rgba(74,222,128,0.12); color: var(--green); }
+    .subj-os   { background: rgba(251,191,36,0.12); color: var(--amber); }
+    .subj-dbms { background: rgba(244,114,182,0.12); color: var(--pink); }
+    .subj-cn   { background: rgba(167,139,250,0.15); color: #a78bfa; }
+    .subj-toc  { background: rgba(34,211,238,0.12); color: var(--cyan); }
+    .subj-dl   { background: rgba(251,146,60,0.12); color: #fb923c; }
+    .subj-dm   { background: rgba(74,222,128,0.12); color: var(--green); }
+    .subj-coa  { background: rgba(192,132,252,0.15); color: #c084fc; }
+
+    .lec-count-bar { font-size: 13px; color: var(--text-secondary); margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; }
+  </style>
+</head>
+<body>
+  <div id="nav-shell"></div>
+
+  <main class="page-content">
+    <div class="container">
+      <!-- Hero -->
+      <div class="lec-hero animate-fade-up">
+        <div>
+          <p class="section-eyebrow">Learn & Master</p>
+          <h1 class="section-title" style="font-size:34px; margin-bottom:8px;">Video <span class="gradient">Lecture Library</span></h1>
+          <p class="text-secondary">46 hand-picked GATE CSE lectures from PW, NPTEL, GFG, Abdul Bari & more.</p>
+          <div style="display:flex; gap:10px; margin-top:16px; flex-wrap:wrap;">
+            <span class="badge badge-violet">🧠 IIT NPTEL</span>
+            <span class="badge" style="background:rgba(255,108,0,0.15);color:#ff6c00;border:1px solid rgba(255,108,0,0.3);">🔥 PW GATE Wallah</span>
+            <span class="badge badge-green">💡 GeeksForGeeks</span>
+            <span class="badge badge-amber">📘 Neso Academy</span>
+          </div>
+        </div>
+        <div style="text-align:center;">
+          <div style="font-size:52px; font-weight:900; font-family:var(--font-display); background:linear-gradient(135deg,var(--violet-light),var(--cyan)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;" id="watched-count">0</div>
+          <div style="font-size:13px; color:var(--text-secondary);">of 46 Watched</div>
+          <div style="margin-top:12px; width:140px;">
+            <div class="progress-bar-wrap" style="height:5px;">
+              <div class="progress-bar-fill" id="lecture-overall-bar" style="width:0%"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Channel filter strip -->
+      <div class="channel-strip animate-fade-up-d1">
+        <button class="channel-filter-btn active" data-ch="all">🎬 All Channels</button>
+        <button class="channel-filter-btn" data-ch="PW">🔥 PW GATE Wallah</button>
+        <button class="channel-filter-btn" data-ch="NPTEL">🎓 NPTEL</button>
+        <button class="channel-filter-btn" data-ch="GFG">💡 GeeksForGeeks</button>
+        <button class="channel-filter-btn" data-ch="Abdul Bari">🧑‍💻 Abdul Bari</button>
+        <button class="channel-filter-btn" data-ch="Neso">📘 Neso Academy</button>
+        <button class="channel-filter-btn" data-ch="GS">⚡ Gate Smashers</button>
+      </div>
+
+      <!-- Subject + search filters -->
+      <div class="lectures-filters animate-fade-up-d2">
+        <div class="search-input-wrap">
+          <span class="search-icon">🔍</span>
+          <input type="text" id="lec-search" placeholder="Search topics, instructors...">
+        </div>
+        <select class="filter-select" id="filter-subject">
+          <option value="">All Subjects</option>
+          <option>Algorithms</option><option>Data Structures</option>
+          <option>Operating Systems</option><option>DBMS</option>
+          <option>Computer Networks</option><option>Theory of Computation</option>
+          <option>Digital Logic</option><option>Discrete Maths</option>
+          <option>Computer Architecture</option>
+        </select>
+        <select class="filter-select" id="filter-level">
+          <option value="">All Levels</option>
+          <option>Foundation</option><option>Intermediate</option>
+        </select>
+        <button class="btn btn-ghost btn-sm" id="filter-unwatched">○ Unwatched</button>
+        <button class="btn btn-ghost btn-sm" id="filter-reset">↺ Reset</button>
+      </div>
+
+      <div class="lec-count-bar">
+        <span id="lec-count-text"></span>
+        <span style="font-size:12px; color:var(--text-muted);">Click ▶ to watch or ○ to mark complete</span>
+      </div>
+
+      <!-- Grid -->
+      <div class="grid-3" id="lectures-grid" style="gap:20px;"></div>
+
+      <div id="no-results" style="display:none; text-align:center; padding:80px 0; color:var(--text-secondary);">
+        <div style="font-size:48px; margin-bottom:16px;">🔍</div>
+        <p style="font-size:16px;">No lectures match your filters.</p>
+      </div>
+    </div>
+  </main>
+
+  <!-- Video Modal -->
+  <div class="video-modal-backdrop" id="video-modal">
+    <div class="video-modal">
+      <div class="video-modal-header">
+        <div style="flex:1; min-width:0;">
+          <div style="font-size:16px; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" id="modal-lecture-title">Lecture</div>
+          <div style="font-size:13px; color:var(--text-secondary); margin-top:4px; display:flex; gap:10px; align-items:center;" id="modal-lecture-meta"></div>
+        </div>
+        <button class="btn btn-ghost btn-sm" id="modal-close" style="flex-shrink:0;">✕ Close</button>
+      </div>
+      <iframe class="video-embed" id="yt-iframe" src="" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+      <div class="video-modal-footer">
+        <div id="modal-badge-row" style="display:flex; gap:8px; flex-wrap:wrap;"></div>
+        <button class="btn btn-emerald btn-sm" id="mark-watched-btn">✓ Mark as Watched</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="footer-shell"></div>
+  <script src="data.js"></script>
+  <script>
+    document.getElementById('nav-shell').innerHTML = GV.renderNavbar('lectures');
+    document.getElementById('footer-shell').innerHTML = GV.renderFooter();
+
+    const subjectClass = {
+      'Algorithms': 'subj-algo', 'Data Structures': 'subj-ds', 'Operating Systems': 'subj-os',
+      'DBMS': 'subj-dbms', 'Computer Networks': 'subj-cn', 'Theory of Computation': 'subj-toc',
+      'Digital Logic': 'subj-dl', 'Discrete Maths': 'subj-dm', 'Computer Architecture': 'subj-coa'
+    };
+
+    const channelClass = { PW: 'ch-pw', NPTEL: 'ch-nptel', GFG: 'ch-gfg', 'Abdul Bari': 'ch-ab',
+      Neso: 'ch-neso', GS: 'ch-gs', MIT: 'ch-mit', Jenny: 'ch-jenny' };
+
+    const channelLabel = { PW: 'PW', NPTEL: 'NPTEL', GFG: 'GFG', 'Abdul Bari': 'Abdul Bari',
+      Neso: 'Neso', GS: 'Gate Smashers', MIT: 'MIT OCW', Jenny: "Jenny's" };
+
+    let currentLectureId = null;
+    let showUnwatchedOnly = false;
+    let activeChannel = 'all';
+
+    function getWatched() {
+      const user = GV.getUser();
+      if (!user) return JSON.parse(localStorage.getItem('gv_watched_guest') || '[]');
+      return GV.getUserData('watchedLectures', []);
+    }
+
+    function setWatched(arr) {
+      const user = GV.getUser();
+      if (!user) { localStorage.setItem('gv_watched_guest', JSON.stringify(arr)); return; }
+      GV.setUserData('watchedLectures', arr);
+    }
+
+    function updateWatchedCount() {
+      const watched = getWatched();
+      const total = GV.lectures.length;
+      document.getElementById('watched-count').textContent = watched.length;
+      document.getElementById('lecture-overall-bar').style.width = Math.round((watched.length / total) * 100) + '%';
+    }
+
+    function renderLectures() {
+      const searchQ = document.getElementById('lec-search').value.toLowerCase();
+      const subjectFilter = document.getElementById('filter-subject').value;
+      const levelFilter = document.getElementById('filter-level').value;
+      const watched = getWatched();
+
+      let filtered = GV.lectures.filter(l => {
+        if (searchQ && !l.topic.toLowerCase().includes(searchQ) && !l.subject.toLowerCase().includes(searchQ) && !l.instructor.toLowerCase().includes(searchQ) && !(l.channel || '').toLowerCase().includes(searchQ)) return false;
+        if (subjectFilter && l.subject !== subjectFilter) return false;
+        if (levelFilter && l.level !== levelFilter) return false;
+        if (activeChannel !== 'all' && l.channel !== activeChannel) return false;
+        if (showUnwatchedOnly && watched.includes(l.id)) return false;
+        return true;
+      });
+
+      document.getElementById('lec-count-text').textContent = `Showing ${filtered.length} of ${GV.lectures.length} lectures`;
+
+      const grid = document.getElementById('lectures-grid');
+      const noResults = document.getElementById('no-results');
+
+      if (filtered.length === 0) { grid.innerHTML = ''; noResults.style.display = 'block'; return; }
+      noResults.style.display = 'none';
+
+      grid.innerHTML = filtered.map(l => {
+        const isWatched = watched.includes(l.id);
+        const sClass = subjectClass[l.subject] || 'subj-algo';
+        const chClass = channelClass[l.channel] || 'ch-ab';
+        const chLabel = channelLabel[l.channel] || l.channel;
+
+        return `
+          <div class="lecture-card ${isWatched ? 'watched' : ''}">
+            <div class="lecture-thumb">
+              <img class="thumb-img" src="https://img.youtube.com/vi/${l.ytId}/mqdefault.jpg" alt="${l.topic}" loading="lazy" onerror="this.style.display='none'">
+              <div class="play-overlay">
+                <div class="play-btn" onclick="openVideoModal(${l.id})">▶</div>
+              </div>
+              ${isWatched ? '<span class="watched-badge">✓ Watched</span>' : ''}
+              <span class="duration-badge">⏱ ${l.duration}</span>
+            </div>
+            <div class="lecture-body">
+              <div class="lecture-top">
+                <span class="subject-tag ${sClass}">${l.subject}</span>
+                <span class="channel-badge ${chClass}">${chLabel}</span>
+              </div>
+              <div class="lecture-title">${l.topic}</div>
+              <div class="lecture-instructor">👤 ${l.instructor}</div>
+              <div style="margin-top:6px;">
+                <span class="badge ${l.level === 'Foundation' ? 'badge-green' : 'badge-violet'}">${l.level}</span>
+              </div>
+            </div>
+            <div class="lecture-footer">
+              <button class="btn btn-primary btn-sm" style="flex:1;" onclick="openVideoModal(${l.id})">▶ Watch</button>
+              <button class="btn btn-ghost btn-sm" onclick="toggleWatched(${l.id})" style="${isWatched ? 'color:var(--green);' : ''}" title="${isWatched ? 'Remove from watched' : 'Mark watched'}">
+                ${isWatched ? '✓' : '○'}
+              </button>
+            </div>
+          </div>`;
+      }).join('');
+
+      updateWatchedCount();
+    }
+
+    window.openVideoModal = (id) => {
+      const l = GV.lectures.find(x => x.id === id);
+      if (!l) return;
+      currentLectureId = id;
+      const chClass = channelClass[l.channel] || 'ch-ab';
+      const chLabel = channelLabel[l.channel] || l.channel;
+      document.getElementById('modal-lecture-title').textContent = l.topic;
+      document.getElementById('modal-lecture-meta').innerHTML = `<span>${l.instructor}</span><span style="color:var(--text-muted)">·</span><span>${l.duration}</span>`;
+      document.getElementById('modal-badge-row').innerHTML = `
+        <span class="channel-badge ${chClass}">${chLabel}</span>
+        <span class="subject-tag ${subjectClass[l.subject] || 'subj-algo'}">${l.subject}</span>
+        <span class="badge ${l.level === 'Foundation' ? 'badge-green' : 'badge-violet'}">${l.level}</span>`;
+      document.getElementById('yt-iframe').src = `https://www.youtube.com/embed/${l.ytId}?autoplay=1`;
+      document.getElementById('video-modal').classList.add('open');
+      document.body.style.overflow = 'hidden';
+    };
+
+    window.toggleWatched = (id) => {
+      let watched = getWatched();
+      watched = watched.includes(id) ? watched.filter(w => w !== id) : [...watched, id];
+      setWatched(watched);
+      renderLectures();
+    };
+
+    function closeVideoModal() {
+      document.getElementById('yt-iframe').src = '';
+      document.getElementById('video-modal').classList.remove('open');
+      document.body.style.overflow = '';
+      currentLectureId = null;
+    }
+
+    document.getElementById('modal-close').addEventListener('click', closeVideoModal);
+    document.getElementById('video-modal').addEventListener('click', e => { if (e.target === document.getElementById('video-modal')) closeVideoModal(); });
+
+    document.getElementById('mark-watched-btn').addEventListener('click', () => {
+      if (currentLectureId !== null) {
+        let watched = getWatched();
+        if (!watched.includes(currentLectureId)) { watched.push(currentLectureId); setWatched(watched); }
+        renderLectures();
+        closeVideoModal();
+      }
+    });
+
+    // Channel filter buttons
+    document.querySelectorAll('.channel-filter-btn').forEach(btn => {
+      btn.addEventListener('click', function() {
+        document.querySelectorAll('.channel-filter-btn').forEach(b => b.classList.remove('active'));
+        this.classList.add('active');
+        activeChannel = this.getAttribute('data-ch');
+        renderLectures();
+      });
+    });
+
+    document.getElementById('lec-search').addEventListener('input', renderLectures);
+    document.getElementById('filter-subject').addEventListener('change', renderLectures);
+    document.getElementById('filter-level').addEventListener('change', renderLectures);
+    document.getElementById('filter-unwatched').addEventListener('click', function() {
+      showUnwatchedOnly = !showUnwatchedOnly;
+      this.textContent = showUnwatchedOnly ? '✓ Unwatched' : '○ Unwatched';
+      this.style.borderColor = showUnwatchedOnly ? 'var(--violet)' : '';
+      renderLectures();
+    });
+    document.getElementById('filter-reset').addEventListener('click', () => {
+      document.getElementById('lec-search').value = '';
+      document.getElementById('filter-subject').value = '';
+      document.getElementById('filter-level').value = '';
+      showUnwatchedOnly = false;
+      activeChannel = 'all';
+      document.getElementById('filter-unwatched').textContent = '○ Unwatched';
+      document.querySelectorAll('.channel-filter-btn').forEach(b => b.classList.remove('active'));
+      document.querySelector('[data-ch="all"]').classList.add('active');
+      renderLectures();
+    });
+
+    renderLectures();
+  </script>
+</body>
+</html>

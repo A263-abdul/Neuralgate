@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Discussion Forum — NeuralGATE</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .forum-layout { display: grid; grid-template-columns: 1fr 280px; gap: 28px; }
+    @media(max-width:900px) { .forum-layout { grid-template-columns: 1fr; } }
+    .post-card { background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: var(--radius-lg); margin-bottom: 16px; overflow: hidden; transition: var(--transition); }
+    .post-card:hover { border-color: var(--border); }
+    .post-card.resolved { border-left: 3px solid var(--green); }
+    .post-header { padding: 18px 20px 14px; display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+    .post-title { font-size: 16px; font-weight: 700; cursor: pointer; }
+    .post-title:hover { color: var(--violet-light); }
+    .post-meta { font-size: 12px; color: var(--text-muted); margin-top: 6px; display: flex; gap: 12px; }
+    .post-body { padding: 0 20px 16px; font-size: 14px; color: var(--text-secondary); line-height: 1.7; }
+    .post-footer { padding: 12px 20px; border-top: 1px solid var(--border-subtle); display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+    .vote-btn { display: flex; align-items: center; gap: 5px; padding: 5px 12px; background: rgba(255,255,255,0.04); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); font-size: 13px; font-weight: 600; cursor: pointer; transition: var(--transition); color: var(--text-secondary); }
+    .vote-btn:hover { border-color: var(--violet); color: var(--violet-light); }
+    .vote-btn.upvoted { background: rgba(99,102,241,0.1); border-color: var(--violet); color: var(--violet-light); }
+    .reply-section { background: rgba(0,0,0,0.15); border-top: 1px solid var(--border-subtle); padding: 16px 20px; display: none; }
+    .reply-section.open { display: block; }
+    .reply-item { padding: 12px 0; border-bottom: 1px solid var(--border-subtle); font-size: 13px; }
+    .reply-item:last-child { border-bottom: none; }
+    .reply-author { font-weight: 700; color: var(--violet-light); margin-right: 6px; }
+    .reply-form { margin-top: 14px; display: flex; gap: 10px; }
+    .reply-form input { flex: 1; background: rgba(255,255,255,0.05); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 10px 14px; font-size: 13px; color: var(--text-primary); font-family: var(--font-body); }
+    .reply-form input:focus { outline: none; border-color: var(--violet); }
+    .compose-card { background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: var(--radius-lg); padding: 24px; margin-bottom: 24px; }
+    .sidebar-card { background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: var(--radius-lg); padding: 20px; margin-bottom: 16px; }
+    .sidebar-card h4 { font-size: 14px; font-weight: 700; margin-bottom: 14px; }
+    .tag-list { display: flex; flex-wrap: wrap; gap: 8px; }
+  </style>
+</head>
+<body>
+  <div id="nav-shell"></div>
+  <main class="page-content">
+    <div class="container">
+      <div style="margin-bottom:28px;">
+        <p class="section-eyebrow">Community Learning</p>
+        <h1 class="section-title" style="font-size:32px;">Doubt <span class="gradient">Discussion Forum</span></h1>
+        <p class="text-secondary">Post doubts, get answers, help fellow aspirants. Subject-tagged threads.</p>
+      </div>
+
+      <div class="forum-layout">
+        <div>
+          <!-- Compose -->
+          <div class="compose-card" id="compose-section">
+            <h4 style="font-size:16px; font-weight:700; margin-bottom:18px;">Post a Doubt or Question</h4>
+            <div style="display:flex; flex-direction:column; gap:14px;">
+              <div class="form-group">
+                <label class="form-label">Title / Question (be specific)</label>
+                <input type="text" id="post-title-input" class="form-input" placeholder="e.g. Why does QuickSort have O(n²) worst case?">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Description (optional)</label>
+                <textarea id="post-body-input" class="form-textarea" placeholder="Add more context, what you've tried, where you're confused..."></textarea>
+              </div>
+              <div style="display:flex; gap:12px; flex-wrap:wrap;">
+                <select id="post-subject" class="form-select" style="flex:1; min-width:160px;">
+                  <option value="">Select Subject</option>
+                  <option>Algorithms</option><option>Data Structures</option>
+                  <option>Operating Systems</option><option>DBMS</option>
+                  <option>Computer Networks</option><option>Theory of Computation</option>
+                  <option>Digital Logic</option><option>Discrete Maths</option><option>General</option>
+                </select>
+                <select id="post-type" class="form-select" style="flex:1; min-width:140px;">
+                  <option value="doubt">Doubt / Question</option>
+                  <option value="discussion">Discussion</option>
+                  <option value="resource">Resource Share</option>
+                  <option value="tip">Study Tip</option>
+                </select>
+              </div>
+              <div style="display:flex; justify-content:flex-end;">
+                <button class="btn btn-primary" id="submit-post">Post to Forum →</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Filters -->
+          <div style="display:flex; gap:10px; margin-bottom:20px; flex-wrap:wrap; align-items:center;">
+            <div class="tabs">
+              <button class="tab-btn active" data-filter="all">All Posts</button>
+              <button class="tab-btn" data-filter="doubt">Doubts</button>
+              <button class="tab-btn" data-filter="discussion">Discussions</button>
+              <button class="tab-btn" data-filter="resolved">Resolved</button>
+            </div>
+            <select id="forum-subject-filter" class="filter-select" style="background:var(--bg-card);border:1px solid var(--border-subtle);border-radius:var(--radius-md);padding:8px 12px;font-size:13px;color:var(--text-primary);font-family:var(--font-body);">
+              <option value="">All Subjects</option>
+              <option>Algorithms</option><option>Data Structures</option>
+              <option>Operating Systems</option><option>DBMS</option>
+              <option>Computer Networks</option><option>Theory of Computation</option>
+              <option>Digital Logic</option><option>General</option>
+            </select>
+          </div>
+
+          <!-- Posts list -->
+          <div id="posts-list"></div>
+        </div>
+
+        <!-- Sidebar -->
+        <div>
+          <div class="sidebar-card">
+            <h4>📊 Forum Stats</h4>
+            <div style="display:flex; flex-direction:column; gap:10px;">
+              <div style="display:flex; justify-content:space-between; font-size:13px;"><span style="color:var(--text-secondary)">Total Posts</span><span id="fs-total" style="font-weight:700;">0</span></div>
+              <div style="display:flex; justify-content:space-between; font-size:13px;"><span style="color:var(--text-secondary)">Resolved</span><span id="fs-resolved" style="font-weight:700; color:var(--green)">0</span></div>
+              <div style="display:flex; justify-content:space-between; font-size:13px;"><span style="color:var(--text-secondary)">Your Posts</span><span id="fs-mine" style="font-weight:700; color:var(--violet-light)">0</span></div>
+            </div>
+          </div>
+
+          <div class="sidebar-card">
+            <h4>🏷 Browse by Subject</h4>
+            <div class="tag-list" id="subject-tags"></div>
+          </div>
+
+          <div class="sidebar-card">
+            <h4>🔥 Hot Topics</h4>
+            <div style="display:flex; flex-direction:column; gap:8px; font-size:13px; color:var(--text-secondary);" id="hot-topics-list"></div>
+          </div>
+
+          <div class="sidebar-card">
+            <h4>💡 Community Guidelines</h4>
+            <ul style="font-size:13px; color:var(--text-secondary); padding-left:16px; display:flex; flex-direction:column; gap:6px;">
+              <li>Be respectful and constructive</li>
+              <li>Tag your subject correctly</li>
+              <li>Mark solved doubts as Resolved</li>
+              <li>Search before posting duplicates</li>
+              <li>Share resources freely</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+  <div id="footer-shell"></div>
+
+  <script src="data.js"></script>
+  <script>
+    document.getElementById('nav-shell').innerHTML = GV.renderNavbar('discuss');
+    document.getElementById('footer-shell').innerHTML = GV.renderFooter();
+
+    const user = GV.getUser();
+    const subjectColors = { 'Algorithms':'#6366f1','Data Structures':'#10b981','Operating Systems':'#f59e0b','DBMS':'#f43f5e','Computer Networks':'#a78bfa','Theory of Computation':'#38bdf8','Digital Logic':'#fb923c','Discrete Maths':'#4ade80','General':'#94a3b8' };
+    const typeColors = { doubt:'badge-rose', discussion:'badge-accent', resource:'badge-emerald', tip:'badge-amber' };
+
+    // Seed starter posts if empty
+    if (!localStorage.getItem('gv_posts')) {
+      const starterPosts = [
+        { id: 1001, title: "How to prove a language is not regular using Pumping Lemma?", body: "I understand the statement of pumping lemma but struggle to apply it in proofs. Any walkthrough for L = {0^n 1^n}?", subject: "Theory of Computation", type: "doubt", author: "Priya N.", authorId: "seed1", timestamp: new Date(Date.now()-3*86400000).toISOString(), upvotes: 12, replies: [{author:"Rahul S.", text:"For L={0^n 1^n}, assume p is pumping length. Pick s=0^p 1^p. Since |xy|≤p, y consists of only 0s. Pumping gives unequal 0s and 1s. Contradiction!"},{author:"Gate Mentor", text:"Great question! Remember: assume regular, derive contradiction using pumping lemma. Practice on 5-6 examples."}], resolved: true },
+        { id: 1002, title: "Difference between Preemptive and Non-preemptive FCFS?", body: "FCFS is always non-preemptive right? Then why do some books mention preemptive FCFS?", subject: "Operating Systems", type: "doubt", author: "Arjun K.", authorId: "seed2", timestamp: new Date(Date.now()-2*86400000).toISOString(), upvotes: 8, replies: [{author:"CS Mentor", text:"Yes, FCFS is inherently non-preemptive. Some books loosely use the term but true FCFS never preempts a running process."}], resolved: true },
+        { id: 1003, title: "Best strategy to tackle GATE in 90 days from scratch?", body: "I'm starting late with ~90 days. Should I skip some topics or cover all? CSE branch.", subject: "General", type: "discussion", author: "Sneha M.", authorId: "seed3", timestamp: new Date(Date.now()-86400000).toISOString(), upvotes: 24, replies: [{author:"AIR 120 Alum", text:"Focus on high-weight topics: Algorithms, OS, DBMS, CN, TOC. Skip architecture deep-dives. Solve last 5 years PYQs religiously."},{author:"NeuralGATE Team", text:"Our 12-week planner covers exactly this! Check the Planner page for a structured approach."}], resolved: false },
+        { id: 1004, title: "SQL: HAVING vs WHERE — when to use which?", body: "In queries with GROUP BY, I keep confusing myself about when HAVING is needed vs WHERE.", subject: "DBMS", type: "doubt", author: "Rohan P.", authorId: "seed4", timestamp: new Date(Date.now()-3600000).toISOString(), upvotes: 5, replies: [], resolved: false }
+      ];
+      localStorage.setItem('gv_posts', JSON.stringify(starterPosts));
+    }
+
+    let activeFilter = 'all';
+    let activeSubjectFilter = '';
+
+    function renderStats() {
+      const posts = GV.getPosts();
+      document.getElementById('fs-total').textContent = posts.length;
+      document.getElementById('fs-resolved').textContent = posts.filter(p => p.resolved).length;
+      document.getElementById('fs-mine').textContent = user ? posts.filter(p => p.authorId === user.id).length : 0;
+    }
+
+    function renderSubjectTags() {
+      const posts = GV.getPosts();
+      const subjectCounts = {};
+      posts.forEach(p => { subjectCounts[p.subject] = (subjectCounts[p.subject] || 0) + 1; });
+      const tagEl = document.getElementById('subject-tags');
+      tagEl.innerHTML = Object.entries(subjectCounts).map(([s, c]) => {
+        const col = subjectColors[s] || '#94a3b8';
+        return `<button onclick="filterSubject('${s}')" style="padding:4px 10px;border-radius:100px;font-size:11px;font-weight:700;background:${col}18;color:${col};border:1px solid ${col}33;cursor:pointer;">${s} (${c})</button>`;
+      }).join('');
+    }
+
+    function filterSubject(s) {
+      document.getElementById('forum-subject-filter').value = s;
+      activeSubjectFilter = s;
+      renderPosts();
+    }
+
+    function renderHotTopics() {
+      const posts = GV.getPosts();
+      const sorted = [...posts].sort((a, b) => b.upvotes - a.upvotes).slice(0, 4);
+      document.getElementById('hot-topics-list').innerHTML = sorted.map(p =>
+        `<div style="padding:8px 0; border-bottom:1px solid var(--border-subtle);">
+          <div style="font-weight:500; color:var(--text-primary); margin-bottom:2px; cursor:pointer;" onclick="scrollToPost(${p.id})">${p.title.length > 52 ? p.title.slice(0,52)+'...' : p.title}</div>
+          <span style="color:var(--text-muted); font-size:11px;">▲ ${p.upvotes} · ${p.subject}</span>
+        </div>`
+      ).join('');
+    }
+
+    function scrollToPost(id) {
+      const el = document.getElementById(`post-${id}`);
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
+    function renderPosts() {
+      const posts = GV.getPosts();
+      const subFilter = document.getElementById('forum-subject-filter').value;
+      const votedPosts = JSON.parse(localStorage.getItem('gv_voted_posts') || '[]');
+
+      let filtered = posts.filter(p => {
+        if (activeFilter === 'doubt' && p.type !== 'doubt') return false;
+        if (activeFilter === 'discussion' && p.type !== 'discussion') return false;
+        if (activeFilter === 'resolved' && !p.resolved) return false;
+        if (subFilter && p.subject !== subFilter) return false;
+        return true;
+      });
+
+      const listEl = document.getElementById('posts-list');
+      if (filtered.length === 0) {
+        listEl.innerHTML = `<div style="text-align:center; padding:60px; color:var(--text-secondary);">
+          <div style="font-size:40px; margin-bottom:12px;">💬</div>
+          <p>No posts found. Be the first to start a discussion!</p>
+        </div>`;
+        return;
+      }
+
+      const ago = (ts) => {
+        const d = (Date.now() - new Date(ts)) / 1000;
+        if (d < 60) return 'just now';
+        if (d < 3600) return Math.floor(d/60) + 'm ago';
+        if (d < 86400) return Math.floor(d/3600) + 'h ago';
+        return Math.floor(d/86400) + 'd ago';
+      };
+
+      listEl.innerHTML = filtered.map(p => {
+        const color = subjectColors[p.subject] || '#94a3b8';
+        const hasVoted = votedPosts.includes(p.id);
+        return `
+          <div class="post-card ${p.resolved ? 'resolved' : ''}" id="post-${p.id}">
+            <div class="post-header">
+              <div style="flex:1;">
+                <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:8px; align-items:center;">
+                  <span style="padding:3px 10px;border-radius:100px;font-size:11px;font-weight:700;background:${color}18;color:${color};border:1px solid ${color}33;">${p.subject}</span>
+                  <span class="badge ${typeColors[p.type] || 'badge-accent'}">${p.type}</span>
+                  ${p.resolved ? '<span class="badge badge-emerald">✓ Resolved</span>' : ''}
+                </div>
+                <div class="post-title" onclick="toggleReplies(${p.id})">${p.title}</div>
+                <div class="post-meta">
+                  <span>👤 ${p.author}</span>
+                  <span>🕐 ${ago(p.timestamp)}</span>
+                  <span>💬 ${p.replies.length} replies</span>
+                </div>
+              </div>
+            </div>
+            ${p.body ? `<div class="post-body">${p.body}</div>` : ''}
+            <div class="post-footer">
+              <button class="vote-btn ${hasVoted ? 'upvoted' : ''}" onclick="upvotePost(${p.id})" data-pid="${p.id}">
+                ▲ <span class="vote-count">${p.upvotes}</span>
+              </button>
+              <button class="btn btn-ghost btn-sm" onclick="toggleReplies(${p.id})">💬 ${p.replies.length} Replies</button>
+              ${user && !p.resolved ? `<button class="btn btn-ghost btn-sm" onclick="markResolved(${p.id})" style="color:var(--green);">✓ Mark Resolved</button>` : ''}
+              ${p.resolved ? '<span style="font-size:13px; color:var(--green); font-weight:600;">✓ Resolved</span>' : ''}
+            </div>
+            <div class="reply-section" id="replies-${p.id}">
+              ${p.replies.length > 0
+                ? p.replies.map(r => `<div class="reply-item"><span class="reply-author">${r.author}:</span>${r.text}</div>`).join('')
+                : '<div style="font-size:13px; color:var(--text-muted); margin-bottom:10px;">No replies yet. Be the first!</div>'
+              }
+              <div class="reply-form">
+                <input type="text" id="reply-input-${p.id}" placeholder="${user ? 'Write a reply...' : 'Login to reply'}" ${!user ? 'disabled' : ''}>
+                ${user ? `<button class="btn btn-primary btn-sm" onclick="submitReply(${p.id})">Reply</button>` : `<a href="login.html" class="btn btn-outline btn-sm">Login</a>`}
+              </div>
+            </div>
+          </div>`;
+      }).join('');
+    }
+
+    window.toggleReplies = (id) => {
+      const el = document.getElementById(`replies-${id}`);
+      el.classList.toggle('open');
+    };
+
+    window.upvotePost = (id) => {
+      const voted = JSON.parse(localStorage.getItem('gv_voted_posts') || '[]');
+      if (voted.includes(id)) return;
+      voted.push(id);
+      localStorage.setItem('gv_voted_posts', JSON.stringify(voted));
+      const posts = GV.getPosts();
+      const post = posts.find(p => p.id === id);
+      if (post) { post.upvotes++; GV.savePosts(posts); }
+      renderPosts();
+    };
+
+    window.markResolved = (id) => {
+      const posts = GV.getPosts();
+      const post = posts.find(p => p.id === id);
+      if (post) { post.resolved = true; GV.savePosts(posts); }
+      renderStats();
+      renderPosts();
+      renderHotTopics();
+    };
+
+    window.submitReply = (id) => {
+      if (!user) return;
+      const input = document.getElementById(`reply-input-${id}`);
+      const text = input.value.trim();
+      if (!text) return;
+      const posts = GV.getPosts();
+      const post = posts.find(p => p.id === id);
+      if (post) {
+        post.replies.push({ author: user.name, text });
+        GV.savePosts(posts);
+        input.value = '';
+        renderPosts();
+        setTimeout(() => {
+          document.getElementById(`replies-${id}`).classList.add('open');
+        }, 50);
+      }
+    };
+
+    document.getElementById('submit-post').addEventListener('click', () => {
+      if (!user) { window.location.href = 'login.html'; return; }
+      const title = document.getElementById('post-title-input').value.trim();
+      const body = document.getElementById('post-body-input').value.trim();
+      const subject = document.getElementById('post-subject').value;
+      const type = document.getElementById('post-type').value;
+      if (!title) { alert('Please enter a title.'); return; }
+      if (!subject) { alert('Please select a subject.'); return; }
+      GV.addPost({ title, body, subject, type, author: user.name, authorId: user.id });
+      document.getElementById('post-title-input').value = '';
+      document.getElementById('post-body-input').value = '';
+      renderPosts(); renderStats(); renderSubjectTags(); renderHotTopics();
+    });
+
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.addEventListener('click', function() {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        this.classList.add('active');
+        activeFilter = this.getAttribute('data-filter');
+        renderPosts();
+      });
+    });
+
+    document.getElementById('forum-subject-filter').addEventListener('change', function() {
+      activeSubjectFilter = this.value;
+      renderPosts();
+    });
+
+    renderStats(); renderSubjectTags(); renderHotTopics(); renderPosts();
+  </script>
+</body>
+</html>

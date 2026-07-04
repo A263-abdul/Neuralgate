@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NeuralGATE — GATE CSE 2027 Preparation Portal</title>
+  <meta name="description" content="India's most structured GATE CSE preparation platform. Video lectures, PYQs, discussion forum, study planner — all in one place. Free forever.">
+  <meta property="og:title" content="NeuralGATE — GATE CSE 2027 Preparation">
+  <meta property="og:description" content="Structured GATE preparation with curated lectures, PYQ bank, doubt forum, and smart study planner.">
+  <link rel="stylesheet" href="style.css">
+  <style>
+    /* Landing-specific styles */
+    .hero {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      padding-top: var(--nav-height);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero-grid-bg {
+      position: absolute;
+      inset: 0;
+      background-image: 
+        linear-gradient(rgba(168,85,247,0.06) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(168,85,247,0.06) 1px, transparent 1px);
+      background-size: 80px 80px;
+      z-index: 0;
+      mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, black 20%, transparent 80%);
+    }
+
+    .hero-content {
+      position: relative;
+      z-index: 1;
+      text-align: center;
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 80px 24px;
+    }
+
+    .hero-eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(168,85,247,0.1);
+      border: 1px solid rgba(168,85,247,0.3);
+      padding: 6px 20px;
+      border-radius: 100px;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--violet-light);
+      margin-bottom: 32px;
+      letter-spacing: 0.3px;
+    }
+
+    .hero-title {
+      font-size: clamp(40px, 7vw, 80px);
+      font-weight: 800;
+      line-height: 1.1;
+      margin-bottom: 24px;
+    }
+
+    .hero-title .line2 {
+      background: linear-gradient(135deg, #c084fc, #22d3ee, #f472b6);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      background-size: 200% 200%;
+      animation: gradientShift 4s ease infinite;
+    }
+
+    .hero-subtitle {
+      font-size: 18px;
+      color: var(--text-secondary);
+      max-width: 600px;
+      margin: 0 auto 40px;
+      line-height: 1.7;
+    }
+
+    .hero-ctas {
+      display: flex;
+      gap: 16px;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-bottom: 64px;
+    }
+
+    /* Countdown */
+    .countdown-strip {
+      display: flex;
+      gap: 0;
+      justify-content: center;
+      margin-bottom: 80px;
+    }
+
+    .countdown-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px 32px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+    }
+
+    .countdown-item:first-child { border-radius: var(--radius-lg) 0 0 var(--radius-lg); }
+    .countdown-item:last-child { border-radius: 0 var(--radius-lg) var(--radius-lg) 0; }
+    .countdown-item:not(:last-child) { border-right: none; }
+
+    .countdown-num {
+      font-family: var(--font-display);
+      font-size: 48px;
+      font-weight: 800;
+      background: linear-gradient(135deg, var(--violet-light), var(--cyan));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      line-height: 1;
+    }
+
+    .countdown-label {
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--text-muted);
+      margin-top: 6px;
+    }
+
+    /* Stats banner */
+    .stats-row {
+      display: flex;
+      gap: 0;
+      justify-content: center;
+      margin-bottom: 20px;
+    }
+
+    .stat-item {
+      padding: 14px 40px;
+      border-right: 1px solid var(--border-subtle);
+      text-align: center;
+    }
+    .stat-item:last-child { border-right: none; }
+    .stat-value { font-size: 28px; font-weight: 800; font-family: var(--font-head); color: var(--text-primary); }
+    .stat-label { font-size: 13px; color: var(--text-muted); }
+
+    /* Features grid */
+    .features-section { padding: 100px 0; }
+
+    .feature-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: 32px;
+      transition: var(--transition);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .feature-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--violet), var(--cyan), transparent);
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+
+    .feature-card:hover { border-color: rgba(168,85,247,0.3); transform: translateY(-6px); box-shadow: 0 20px 60px rgba(0,0,0,0.4), 0 0 30px var(--violet-glow); }
+    .feature-card:hover::before { opacity: 1; }
+
+    .feature-icon {
+      width: 52px; height: 52px;
+      border-radius: var(--radius-md);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 24px;
+      margin-bottom: 20px;
+    }
+
+    .icon-accent { background: rgba(168,85,247,0.15); }
+    .icon-emerald { background: rgba(74,222,128,0.15); }
+    .icon-amber { background: rgba(251,191,36,0.15); }
+    .icon-rose { background: rgba(244,114,182,0.15); }
+    .icon-violet { background: rgba(192,132,252,0.15); }
+    .icon-sky { background: rgba(34,211,238,0.15); }
+
+    .feature-card h3 { font-size: 20px; font-weight: 700; margin-bottom: 12px; }
+    .feature-card p { color: var(--text-secondary); font-size: 14px; line-height: 1.7; margin-bottom: 20px; }
+
+    /* Subject coverage */
+    .subjects-section { padding: 80px 0; background: rgba(168,85,247,0.03); border-top: 1px solid var(--border-subtle); border-bottom: 1px solid var(--border-subtle); }
+
+    .subject-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 18px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: 100px;
+      font-size: 14px;
+      font-weight: 600;
+      transition: var(--transition);
+    }
+    .subject-pill:hover { border-color: var(--violet); color: var(--violet-light); }
+    .subject-pill .dot { width: 8px; height: 8px; border-radius: 50%; }
+
+    /* Timeline section */
+    .timeline-section { padding: 100px 0; }
+    .timeline { position: relative; }
+    .timeline::before { content:''; position: absolute; left: 50%; top: 0; bottom: 0; width: 2px; background: var(--border-subtle); transform: translateX(-50%); }
+
+    .timeline-item {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 40px;
+      margin-bottom: 48px;
+      align-items: start;
+    }
+
+    .timeline-content {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+    }
+
+    .timeline-item:nth-child(even) .timeline-content { grid-column: 2; }
+    .timeline-item:nth-child(odd) .timeline-content { grid-column: 1; }
+
+    .timeline-dot {
+      position: absolute;
+      left: 50%;
+      width: 12px; height: 12px;
+      background: var(--violet);
+      border-radius: 50%;
+      transform: translateX(-50%);
+      box-shadow: 0 0 12px var(--violet-glow);
+      margin-top: 28px;
+    }
+
+    /* Testimonials */
+    .testimonials { padding: 100px 0; background: rgba(12,0,24,0.6); border-top: 1px solid var(--border-subtle); }
+    .testimonial-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: 28px;
+    }
+    .testimonial-text { font-size: 15px; line-height: 1.7; color: var(--text-secondary); margin-bottom: 20px; font-style: italic; }
+    .testimonial-author { display: flex; align-items: center; gap: 12px; }
+    .t-avatar { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 15px; }
+    .t-name { font-weight: 700; font-size: 14px; }
+    .t-tag { font-size: 12px; color: var(--green); }
+    .stars { color: var(--amber); font-size: 13px; margin-bottom: 14px; }
+
+    /* CTA Bottom */
+    .cta-section {
+      padding: 120px 0;
+      text-align: center;
+    }
+
+    .cta-box {
+      max-width: 700px;
+      margin: 0 auto;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-xl);
+      padding: 64px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .cta-box::before {
+      content:'';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse at center top, rgba(168,85,247,0.2), transparent 60%);
+    }
+
+    .cta-box > * { position: relative; z-index: 1; }
+    .cta-box h2 { font-size: 36px; font-weight: 800; margin-bottom: 16px; }
+    .cta-box p { color: var(--text-secondary); font-size: 16px; margin-bottom: 32px; }
+  </style>
+</head>
+<body>
+  <div class="bg-mesh"></div>
+  <div class="bg-grid"></div>
+  <div id="page-shell"></div>
+  
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-grid-bg"></div>
+    <div class="container">
+      <div class="hero-content animate-fade-up">
+        <div class="hero-eyebrow">
+          <span>🧠</span>
+          GATE 2027 Preparation — CSE Focus
+        </div>
+        <h1 class="hero-title">
+          Crack GATE with<br>
+          <span class="line2">Structured Precision</span>
+        </h1>
+        <p class="hero-subtitle">
+          Video lectures, curated PYQs, doubt forums, and smart study planner — everything a GATE aspirant needs, in one beautiful platform.
+        </p>
+        <div class="hero-ctas">
+          <a href="register.html" class="btn btn-primary btn-lg">Start Preparing Free →</a>
+          <a href="pyqs.html" class="btn btn-outline btn-lg">Explore PYQ Bank</a>
+        </div>
+
+        <!-- Live countdown -->
+        <div style="margin-bottom:16px; font-size:13px; color:var(--text-muted); text-transform:uppercase; letter-spacing:1px;">
+          Time Remaining Until GATE 2027
+        </div>
+        <div class="countdown-strip" id="countdown-strip">
+          <div class="countdown-item"><span class="countdown-num" id="cd-days">--</span><span class="countdown-label">Days</span></div>
+          <div class="countdown-item"><span class="countdown-num" id="cd-hours">--</span><span class="countdown-label">Hours</span></div>
+          <div class="countdown-item"><span class="countdown-num" id="cd-mins">--</span><span class="countdown-label">Minutes</span></div>
+          <div class="countdown-item"><span class="countdown-num" id="cd-secs">--</span><span class="countdown-label">Seconds</span></div>
+        </div>
+
+        <!-- Stats -->
+        <div class="stats-row">
+          <div class="stat-item"><div class="stat-value" style="color:var(--violet-light)">46+</div><div class="stat-label">Video Lectures</div></div>
+          <div class="stat-item"><div class="stat-value" style="color:var(--cyan)">18+</div><div class="stat-label">PYQ Questions</div></div>
+          <div class="stat-item"><div class="stat-value" style="color:var(--pink)">9</div><div class="stat-label">Subjects Covered</div></div>
+          <div class="stat-item"><div class="stat-value" style="color:var(--green)">12 Wk</div><div class="stat-label">Smart Plan</div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FEATURES -->
+  <section class="features-section">
+    <div class="container">
+      <div class="text-center mb-8">
+        <p class="section-eyebrow">Everything you need</p>
+        <h2 class="section-title" style="text-align:center">Built for GATE. Built for <span class="gradient">Results.</span></h2>
+        <p class="section-desc" style="margin: 0 auto;">Six powerful modules designed to take you from zero to AIR under 100 — systematically.
+        </p>
+      </div>
+
+      <div class="grid-3" style="gap:24px">
+        <div class="feature-card animate-fade-up">
+          <div class="feature-icon icon-accent">🎬</div>
+          <h3>Curated Video Lectures</h3>
+          <p>46 lectures from PW GATE Wallah, NPTEL IIT professors, GFG, Abdul Bari, Neso Academy — filtered by subject, channel & level.</p>
+          <a href="lectures.html" class="btn btn-ghost btn-sm">Browse Lectures →</a>
+        </div>
+
+        <div class="feature-card animate-fade-up-d1">
+          <div class="feature-icon icon-emerald">📋</div>
+          <h3>GATE PYQ Bank</h3>
+          <p>Previous Year Questions from 2018–2024 with detailed explanations. Filter by year, subject, or difficulty. Track your attempts and bookmark tough ones.</p>
+          <a href="pyqs.html" class="btn btn-ghost btn-sm">Solve PYQs →</a>
+        </div>
+
+        <div class="feature-card animate-fade-up-d2">
+          <div class="feature-icon icon-amber">💬</div>
+          <h3>Doubt Discussion Forum</h3>
+          <p>Post your doubts, get answers from peers. Subject-wise threads, upvote system, and resolved markers — built for real academic discussions.</p>
+          <a href="discuss.html" class="btn btn-ghost btn-sm">Join Discussion →</a>
+        </div>
+
+        <div class="feature-card animate-fade-up">
+          <div class="feature-icon icon-rose">📅</div>
+          <h3>12-Week Study Planner</h3>
+          <p>A structured week-by-week GATE study plan aligned to the official syllabus. Mark topics, track progress, and stay on schedule.</p>
+          <a href="planner.html" class="btn btn-ghost btn-sm">Open Planner →</a>
+        </div>
+
+        <div class="feature-card animate-fade-up-d1">
+          <div class="feature-icon icon-violet">⏱️</div>
+          <h3>Days Left Tracker</h3>
+          <p>Personalized countdown to GATE 2027, study streak tracker, and progress rings — keep motivation high every single day.</p>
+          <a href="dashboard.html" class="btn btn-ghost btn-sm">View Dashboard →</a>
+        </div>
+
+        <div class="feature-card animate-fade-up-d2">
+          <div class="feature-icon icon-sky">📚</div>
+          <h3>Resources & References</h3>
+          <p>Recommended books, formulas sheets, official mock tests, and important dates — all curated and verified for GATE CSE 2027.</p>
+          <a href="resources.html" class="btn btn-ghost btn-sm">See Resources →</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SUBJECTS -->
+  <section class="subjects-section">
+    <div class="container">
+      <div class="text-center mb-8">
+        <p class="section-eyebrow">Complete Coverage</p>
+        <h2 class="section-title" style="text-align:center">All <span class="gradient">8 GATE CSE Subjects</span> Covered</h2>
+      </div>
+      <div style="display:flex; flex-wrap:wrap; gap:12px; justify-content:center;">
+        <span class="subject-pill"><span class="dot" style="background:#6366f1"></span>Algorithms</span>
+        <span class="subject-pill"><span class="dot" style="background:#10b981"></span>Data Structures</span>
+        <span class="subject-pill"><span class="dot" style="background:#f59e0b"></span>Operating Systems</span>
+        <span class="subject-pill"><span class="dot" style="background:#f43f5e"></span>DBMS</span>
+        <span class="subject-pill"><span class="dot" style="background:#a78bfa"></span>Computer Networks</span>
+        <span class="subject-pill"><span class="dot" style="background:#38bdf8"></span>Theory of Computation</span>
+        <span class="subject-pill"><span class="dot" style="background:#fb923c"></span>Digital Logic</span>
+        <span class="subject-pill"><span class="dot" style="background:#4ade80"></span>Discrete Mathematics</span>
+        <span class="subject-pill"><span class="dot" style="background:#c084fc"></span>Computer Architecture</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- TESTIMONIALS -->
+  <section class="testimonials">
+    <div class="container">
+      <div class="text-center mb-8">
+        <p class="section-eyebrow">Student Stories</p>
+        <h2 class="section-title" style="text-align:center">Aspirants <span class="gradient">Love NeuralGATE</span></h2>
+      </div>
+      <div class="grid-3">
+        <div class="testimonial-card">
+          <div class="stars">★★★★★</div>
+          <p class="testimonial-text">"The 12-week planner completely transformed my preparation. I could see exactly what to study each day. Got AIR 342 in GATE 2025!"</p>
+          <div class="testimonial-author">
+            <div class="t-avatar" style="background:rgba(99,102,241,0.2); color:var(--violet-light)">R</div>
+            <div>
+              <div class="t-name">Rahul Sharma</div>
+              <div class="t-tag">GATE 2025 — AIR 342</div>
+            </div>
+          </div>
+        </div>
+        <div class="testimonial-card">
+          <div class="stars">★★★★★</div>
+          <p class="testimonial-text">"The discussion forum is incredibly active and helpful. Seniors actually respond! The PYQ bank with explanations is gold."</p>
+          <div class="testimonial-author">
+            <div class="t-avatar" style="background:rgba(16,185,129,0.2); color:var(--green)">P</div>
+            <div>
+              <div class="t-name">Priya Nair</div>
+              <div class="t-tag">GATE 2024 — AIR 891</div>
+            </div>
+          </div>
+        </div>
+        <div class="testimonial-card">
+          <div class="stars">★★★★★</div>
+          <p class="testimonial-text">"Abdul Bari's lectures linked right here + solved PYQs in one platform — this is all you need. Cleared in first attempt. Best free resource."</p>
+          <div class="testimonial-author">
+            <div class="t-avatar" style="background:rgba(245,158,11,0.2); color:var(--amber)">A</div>
+            <div>
+              <div class="t-name">Ankit Verma</div>
+              <div class="t-tag">GATE 2024 — Score 71.2</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="cta-section">
+    <div class="container">
+      <div class="cta-box">
+        <div class="hero-eyebrow" style="display:inline-flex; margin-bottom:20px;">Free Forever • No credit card needed</div>
+        <h2>Start Your GATE Journey<br>Today</h2>
+        <p>Join thousands of aspirants already using NeuralGATE to crack GATE 2027.</p>
+        <div style="display:flex; gap:16px; justify-content:center; flex-wrap:wrap;">
+          <a href="register.html" class="btn btn-primary btn-lg">Create Free Account →</a>
+          <a href="lectures.html" class="btn btn-outline btn-lg">Browse Lectures</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div id="footer-shell"></div>
+
+  <script src="data.js"></script>
+  <script>
+    // Inject nav and footer
+    document.getElementById('page-shell').innerHTML = GV.renderNavbar('home');
+    document.getElementById('footer-shell').innerHTML = GV.renderFooter();
+
+    // Live countdown to GATE 2027
+    function updateCountdown() {
+      const gateDate = new Date('2027-02-07T09:00:00');
+      const now = new Date();
+      const diff = gateDate - now;
+
+      if (diff <= 0) {
+        document.getElementById('countdown-strip').innerHTML = '<div style="padding:20px;font-size:20px;font-weight:700;color:var(--green)">🎉 GATE 2027 Day is Here!</div>';
+        return;
+      }
+
+      const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+      const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+      const secs = Math.floor((diff % (1000 * 60)) / 1000);
+
+      document.getElementById('cd-days').textContent = String(days).padStart(3, '0');
+      document.getElementById('cd-hours').textContent = String(hours).padStart(2, '0');
+      document.getElementById('cd-mins').textContent = String(mins).padStart(2, '0');
+      document.getElementById('cd-secs').textContent = String(secs).padStart(2, '0');
+    }
+
+    setInterval(updateCountdown, 1000);
+    updateCountdown();
+  </script>
+</body>
+</html>

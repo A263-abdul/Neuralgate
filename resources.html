@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Resources — NeuralGATE</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .res-section { margin-bottom: 48px; }
+    .res-section-title { font-size: 20px; font-weight: 800; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
+    .book-card { background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: var(--radius-lg); padding: 22px; display: flex; gap: 18px; align-items: flex-start; transition: var(--transition); }
+    .book-card:hover { border-color: var(--border); transform: translateY(-2px); }
+    .book-icon { width: 52px; height: 64px; border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; font-size: 28px; flex-shrink: 0; }
+    .book-title { font-size: 15px; font-weight: 700; margin-bottom: 4px; }
+    .book-author { font-size: 13px; color: var(--text-secondary); margin-bottom: 8px; }
+    .book-tags { display: flex; gap: 6px; flex-wrap: wrap; }
+    .formula-card { background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: var(--radius-lg); padding: 22px; }
+    .formula-card h4 { font-size: 15px; font-weight: 700; margin-bottom: 14px; color: var(--violet-light); }
+    .formula-item { font-size: 13px; color: var(--text-secondary); padding: 8px 0; border-bottom: 1px solid var(--border-subtle); font-family: var(--font-mono); }
+    .formula-item:last-child { border-bottom: none; }
+    .date-card { background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: var(--radius-lg); padding: 20px; display: flex; align-items: center; gap: 16px; }
+    .date-icon { width: 48px; height: 48px; border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; font-size: 22px; flex-shrink: 0; }
+    .date-info .date-title { font-size: 15px; font-weight: 700; margin-bottom: 2px; }
+    .date-info .date-val { font-size: 14px; color: var(--violet-light); font-weight: 600; }
+    .mock-card { background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: var(--radius-lg); padding: 20px; transition: var(--transition); }
+    .mock-card:hover { border-color: var(--violet); transform: translateY(-2px); }
+    .mock-card h4 { font-size: 15px; font-weight: 700; margin-bottom: 6px; }
+    .mock-card p { font-size: 13px; color: var(--text-secondary); margin-bottom: 14px; }
+  </style>
+</head>
+<body>
+  <div id="nav-shell"></div>
+  <main class="page-content">
+    <div class="container">
+      <div style="margin-bottom:40px;">
+        <p class="section-eyebrow">Study Materials</p>
+        <h1 class="section-title" style="font-size:32px;">GATE CSE <span class="gradient">Resources Hub</span></h1>
+        <p class="text-secondary">Books, formulas, mock tests, and important dates — everything verified for GATE 2027.</p>
+      </div>
+
+      <!-- Important Dates -->
+      <div class="res-section">
+        <div class="res-section-title">📅 GATE 2027 Important Dates</div>
+        <div class="grid-2" id="dates-grid"></div>
+      </div>
+
+      <!-- Recommended Books -->
+      <div class="res-section">
+        <div class="res-section-title">📚 Recommended Books</div>
+        <div style="display:flex; flex-direction:column; gap:14px;" id="books-list"></div>
+      </div>
+
+      <!-- Quick Formula Reference -->
+      <div class="res-section">
+        <div class="res-section-title">⚡ Quick Formula Reference</div>
+        <div class="grid-3" id="formulas-grid"></div>
+      </div>
+
+      <!-- Mock Tests -->
+      <div class="res-section">
+        <div class="res-section-title">🎯 Mock Tests & Practice</div>
+        <div class="grid-3" id="mocks-grid"></div>
+      </div>
+
+      <!-- Exam Pattern -->
+      <div class="res-section">
+        <div class="res-section-title">📋 GATE 2027 Exam Pattern</div>
+        <div class="card" style="padding:28px;">
+          <div class="grid-2" style="gap:32px;">
+            <div>
+              <h4 style="margin-bottom:16px; color:var(--violet-light);">Paper Structure</h4>
+              <table style="width:100%; border-collapse:collapse; font-size:14px;">
+                <tr style="border-bottom:1px solid var(--border-subtle);">
+                  <td style="padding:10px 0; color:var(--text-secondary);">Total Questions</td>
+                  <td style="padding:10px 0; font-weight:700; text-align:right;">65</td>
+                </tr>
+                <tr style="border-bottom:1px solid var(--border-subtle);">
+                  <td style="padding:10px 0; color:var(--text-secondary);">Total Marks</td>
+                  <td style="padding:10px 0; font-weight:700; text-align:right;">100</td>
+                </tr>
+                <tr style="border-bottom:1px solid var(--border-subtle);">
+                  <td style="padding:10px 0; color:var(--text-secondary);">Duration</td>
+                  <td style="padding:10px 0; font-weight:700; text-align:right;">3 Hours</td>
+                </tr>
+                <tr style="border-bottom:1px solid var(--border-subtle);">
+                  <td style="padding:10px 0; color:var(--text-secondary);">GA Section</td>
+                  <td style="padding:10px 0; font-weight:700; text-align:right;">10 Qs / 15 Marks</td>
+                </tr>
+                <tr>
+                  <td style="padding:10px 0; color:var(--text-secondary);">Technical Section</td>
+                  <td style="padding:10px 0; font-weight:700; text-align:right;">55 Qs / 85 Marks</td>
+                </tr>
+              </table>
+            </div>
+            <div>
+              <h4 style="margin-bottom:16px; color:var(--violet-light);">Marking Scheme</h4>
+              <div style="display:flex;flex-direction:column;gap:12px; font-size:14px;">
+                <div style="background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.2);border-radius:var(--radius-md);padding:14px;">
+                  <div style="font-weight:700; color:var(--green); margin-bottom:4px;">1-Mark MCQ</div>
+                  <div style="color:var(--text-secondary);">+1 correct · −1/3 wrong</div>
+                </div>
+                <div style="background:rgba(99,102,241,0.08);border:1px solid rgba(99,102,241,0.2);border-radius:var(--radius-md);padding:14px;">
+                  <div style="font-weight:700; color:var(--violet-light); margin-bottom:4px;">2-Mark MCQ</div>
+                  <div style="color:var(--text-secondary);">+2 correct · −2/3 wrong</div>
+                </div>
+                <div style="background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.2);border-radius:var(--radius-md);padding:14px;">
+                  <div style="font-weight:700; color:var(--amber); margin-bottom:4px;">NAT Questions</div>
+                  <div style="color:var(--text-secondary);">+1 or +2 · No negative marking</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+  <div id="footer-shell"></div>
+
+  <script src="data.js"></script>
+  <script>
+    document.getElementById('nav-shell').innerHTML = GV.renderNavbar('resources');
+    document.getElementById('footer-shell').innerHTML = GV.renderFooter();
+
+    const dates = [
+      { icon: '📢', bg: 'rgba(99,102,241,0.15)', title: 'Notification Release', date: 'August 2026 (Expected)' },
+      { icon: '📝', bg: 'rgba(16,185,129,0.15)', title: 'Application Opens', date: 'September 2026 (Expected)' },
+      { icon: '📋', bg: 'rgba(245,158,11,0.15)', title: 'Application Deadline', date: 'October 2026 (Expected)' },
+      { icon: '🎫', bg: 'rgba(244,63,94,0.15)', title: 'Admit Card Release', date: 'January 2027 (Expected)' },
+      { icon: '✍️', bg: 'rgba(99,102,241,0.15)', title: 'GATE 2027 Exam Date', date: 'February 7–8, 2027' },
+      { icon: '🏆', bg: 'rgba(16,185,129,0.15)', title: 'Result Declaration', date: 'March 2027 (Expected)' },
+    ];
+
+    document.getElementById('dates-grid').innerHTML = dates.map(d => `
+      <div class="date-card">
+        <div class="date-icon" style="background:${d.bg}">${d.icon}</div>
+        <div class="date-info"><div class="date-title">${d.title}</div><div class="date-val">${d.date}</div></div>
+      </div>`).join('');
+
+    const books = [
+      { icon: '📘', bg: 'rgba(99,102,241,0.15)', title: 'Introduction to Algorithms (CLRS)', author: 'Cormen, Leiserson, Rivest, Stein', subjects: ['Algorithms', 'Data Structures'], note: 'The gold standard reference for algorithms. Must-read for GATE.' },
+      { icon: '📗', bg: 'rgba(16,185,129,0.15)', title: 'Operating System Concepts', author: 'Silberschatz, Galvin, Gagne', subjects: ['Operating Systems'], note: 'Most comprehensive OS book. Chapters 1-12 are directly relevant to GATE.' },
+      { icon: '📙', bg: 'rgba(245,158,11,0.15)', title: 'Database System Concepts', author: 'Silberschatz, Korth, Sudarshan', subjects: ['DBMS'], note: 'Complete DBMS resource. Focus on relational model, SQL, normalization, and transactions.' },
+      { icon: '📕', bg: 'rgba(244,63,94,0.15)', title: 'Computer Networks', author: 'Andrew S. Tanenbaum', subjects: ['Computer Networks'], note: 'Excellent depth on networking protocols. Chapters 3-6 are most GATE-relevant.' },
+      { icon: '📔', bg: 'rgba(167,139,250,0.15)', title: 'Introduction to Theory of Computation', author: 'Michael Sipser', subjects: ['Theory of Computation'], note: 'Clear and intuitive explanations of automata, formal languages, and computability.' },
+      { icon: '📒', bg: 'rgba(56,189,248,0.15)', title: 'Digital Design', author: 'M. Morris Mano', subjects: ['Digital Logic', 'Computer Architecture'], note: 'Complete guide to Boolean algebra, logic circuits, and digital systems.' },
+    ];
+
+    document.getElementById('books-list').innerHTML = books.map(b => `
+      <div class="book-card">
+        <div class="book-icon" style="background:${b.bg}">${b.icon}</div>
+        <div style="flex:1;">
+          <div class="book-title">${b.title}</div>
+          <div class="book-author">by ${b.author}</div>
+          <div style="font-size:13px; color:var(--text-secondary); margin-bottom:10px; line-height:1.6;">${b.note}</div>
+          <div class="book-tags">${b.subjects.map(s => `<span class="tag">${s}</span>`).join('')}</div>
+        </div>
+      </div>`).join('');
+
+    const formulas = [
+      {
+        title: '⏱ Complexity Classes',
+        items: ['O(1) — Constant', 'O(log n) — Binary Search', 'O(n) — Linear Scan', 'O(n log n) — Merge Sort', 'O(n²) — Bubble/Insertion', 'O(2ⁿ) — Exponential']
+      },
+      {
+        title: '🌲 Tree Formulas',
+        items: ['Max nodes (height h) = 2^(h+1) - 1', 'Min height (n nodes) = ⌊log₂n⌋', 'Leaves in full BT = (n+1)/2', 'AVL max height diff = 1', 'Inorder of BST = sorted order', 'B-tree order m: max 2m-1 keys']
+      },
+      {
+        title: '💽 OS Formulas',
+        items: ['Page faults: FIFO/LRU/OPT', 'Throughput = jobs/time', 'Turnaround = finish - arrival', 'Waiting = turnaround - burst', 'CPU Util = 1 - p^n', 'TLB access: α·t + (1-α)·(t+m)']
+      },
+      {
+        title: '🌐 Network Formulas',
+        items: ['Bandwidth-Delay Product = BW × RTT', 'Efficiency (Stop & Wait) = 1/(1+2a)', 'Throughput = Min(BW, Window/RTT)', 'Hamming distance ≥ d+1 (detection)', 'Hamming distance ≥ 2d+1 (correction)', 'Subnetting: 2^(host bits) - 2 hosts']
+      },
+      {
+        title: '🗄 DBMS Formulas',
+        items: ['Normalization: 1NF→2NF→3NF→BCNF', '2NF: No partial dependency', '3NF: No transitive dependency', 'BCNF: Every LHS is superkey', 'TP system: ACID properties', 'Concurrency: Serial ≡ Serializable']
+      },
+      {
+        title: '🔢 Discrete Maths',
+        items: ['Pigeonhole: n+1 items, n boxes', 'nCr = n! / (r!(n-r)!)', 'Euler: v - e + f = 2 (planar)', 'Handshaking: Σdeg = 2|E|', 'Chromatic # ≤ max degree + 1', 'Recurrence: a_n = a_{n-1} + f(n)']
+      }
+    ];
+
+    document.getElementById('formulas-grid').innerHTML = formulas.map(f => `
+      <div class="formula-card">
+        <h4>${f.title}</h4>
+        ${f.items.map(i => `<div class="formula-item">${i}</div>`).join('')}
+      </div>`).join('');
+
+    const mocks = [
+      { title: 'GATE Official Mock Test', desc: 'Released by IIT organizing institute each year. Exact exam interface and format.', link: 'https://gate2024.iisc.ac.in', tag: 'Official', color: 'badge-emerald' },
+      { title: 'GOGATE Practice', desc: 'Free GATE CSE practice tests with performance analytics and subject-wise reports.', link: '#', tag: 'Free', color: 'badge-accent' },
+      { title: 'Made Easy Test Series', desc: 'Highly popular test series covering full GATE syllabus with detailed explanations.', link: '#', tag: 'Paid', color: 'badge-amber' },
+      { title: 'GeeksForGeeks GATE', desc: 'Large question bank from previous years + practice sets organized by topic.', link: 'https://www.geeksforgeeks.org/gate-cs-notes-gq/', tag: 'Free', color: 'badge-accent' },
+      { title: 'GateOverflow', desc: 'Dedicated GATE CSE question bank with community explanations for every PYQ.', link: 'https://gateoverflow.in', tag: 'Free', color: 'badge-emerald' },
+      { title: 'Testbook GATE Series', desc: 'Full-length mocks with AI-powered analysis and weakness identification.', link: '#', tag: 'Paid', color: 'badge-amber' },
+    ];
+
+    document.getElementById('mocks-grid').innerHTML = mocks.map(m => `
+      <div class="mock-card">
+        <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
+          <span class="badge ${m.color}">${m.tag}</span>
+        </div>
+        <h4>${m.title}</h4>
+        <p>${m.desc}</p>
+        <a href="${m.link}" target="_blank" class="btn btn-ghost btn-sm" style="width:100%; justify-content:center;">Open Resource →</a>
+      </div>`).join('');
+  </script>
+</body>
+</html>
